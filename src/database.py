@@ -6,14 +6,15 @@ class Room:
     id: int
 
 @dataclass
-class Booking:
-    id: int
-    room: Room
-    time: int
-
-@dataclass
 class User:
     username: str
+
+@dataclass
+class Booking:
+    id: int
+    user: User
+    room: Room
+    time: int
 
 class DatabaseManager:
     """Database class the has functions mapped to identified SQL queries that are necersarry"""
@@ -26,4 +27,8 @@ class DatabaseManager:
     def add_booking(self, room: Room, time: int, user: User):
         return None
     def remove_booking(self, id: int):
+        return None
+    def get_all_bookings(self):
+        return []
+    def get_room(self, room_id: int):
         return None

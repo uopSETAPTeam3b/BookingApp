@@ -1,7 +1,7 @@
 from fastapi import HTTPException
 from pydantic.dataclasses import dataclass
 from api import API
-from database import Room, Booking
+from database import Room, Booking, User, DatabaseManager
 
 class BookingManager(API):
     prefix = "/booking"
@@ -21,7 +21,13 @@ class BookingManager(API):
         room_id: int
 
     def book_room(self, booking: BookRoom) -> str:
-        return ""
+        # check token first idk how to do that
+        existing_booking = DatabaseManager.find_booking(booking.datetime, booking.room_id)
+        if existing_booking:
+            raise HTTPException(400, {"error": "Room already booked"})
+        else:
+            DatabaseManager.add_booking(booking.datetime, booking.room_id, User("username"))
+            return "Booking successful"
     
     @dataclass
     class CancelRoom:
@@ -29,6 +35,15 @@ class BookingManager(API):
         booking_id: int
 
     def cancel_room(self, cancel: CancelRoom) -> str:
+        # check token first idk how to do that
+        booking = DatabaseManager.find_booking(cancel.booking_id)
+        if not booking:
+            raise HTTPException(status_code=404, detail="Booking not found or unauthorized")
+        else:
+            DatabaseManager.remove_booking(cancel.booking_id)
+            return "Booking cancelled"
+
+        
         raise HTTPException(500, {"error": "use appropriate status code"})
     
     @dataclass
@@ -45,18 +60,24 @@ class BookingManager(API):
         token: str
     def get_bookings(self, bookings: GetBookings) -> list[Booking]:
         """Returns a list of active bookings for this user"""
-        return []
+        # check token first idk how to do that
+        return BookingManager.get_all_bookings().filter(lambda booking: booking.user.username == bookings.token.username)   
     
     @dataclass
     class GetBooking:
         token: str
         booking_id: int
     def get_booking(self, booking: GetBooking) -> Booking:
-        return Booking(0, Room(0), 0)
-    
+        # check token first idk how to do that
+        return BookingManager.find_booking(booking.booking_id) 
+       
     @dataclass
     class GetRoom:
         token: str
         room_id: int
     def get_room(self, room: GetRoom) -> Room:
-        return Room(0)
+        # check token first idk how to do that
+        searched_room = DatabaseManager.get_room(room.room_id)
+        if not searched_room:
+            raise HTTPException(status_code=404, detail="Room not found")
+        return searched_room
