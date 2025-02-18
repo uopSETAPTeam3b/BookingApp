@@ -22,6 +22,9 @@ class BookingManager(API):
     
     def book_room(self, booking: BookRoom) -> str:
         # check token first idk how to do that
+        if not DatabaseManager.verify_token(booking.token):
+            raise HTTPException(status_code=404, detail="User not found")
+        
         existing_booking = DatabaseManager.find_booking(booking.datetime, booking.room_id)
         if existing_booking:
             raise HTTPException(status_code= 409, detail="Room already booked")
@@ -35,49 +38,59 @@ class BookingManager(API):
         booking_id: int
 
     def cancel_room(self, cancel: CancelRoom) -> str:
-        # check token first idk how to do that
+        if not DatabaseManager.verify_token(cancel.token):
+            raise HTTPException(status_code=404, detail="User not found")
         booking = DatabaseManager.find_booking(cancel.booking_id)
         if not booking:
-            raise HTTPException(status_code=404, detail="Booking not found or unauthorized")
+            raise HTTPException(status_code=404, detail="Booking not found")
         else:
             DatabaseManager.remove_booking(cancel.booking_id)
             return "Booking cancelled"
-
-        
         raise HTTPException(500, {"error": "use appropriate status code"})
     
     @dataclass
     class ShareRoom:
         token: str
         booking_id: int
-        username: int
-
+        username: str
     def share_room(self, share: ShareRoom) -> str:
+        if not DatabaseManager.verify_token(share.token):
+            raise HTTPException(status_code=404, detail="User not found")
+        share_to = DatabaseManager.get_user(share.username)
+        if not share_to:
+            #status code needs checking
+            raise HTTPException(status_code=404, detail="User not found")
         return ""
     
     @dataclass
     class GetBookings:
         token: str
-
     def get_bookings(self, bookings: GetBookings) -> list[Booking]:
         """Returns a list of active bookings for this user"""
-        # check token first idk how to do that
-        return BookingManager.get_all_bookings().filter(lambda booking: booking.user.username == bookings.token.username)   
+        if not DatabaseManager.verify_token(bookings.token):
+            raise HTTPException(status_code=404, detail="User not found")
+        all_bookings = DatabaseManager.get_all_bookings()
+        user = DatabaseManager.get_user(bookings.token)
+        user_bookings = []
+        for booking in all_bookings:
+            if booking.user == user:
+                user_bookings.append(booking)
+        return user_bookings
     
     @dataclass
     class GetBooking:
         token: str
         booking_id: int
-
     def get_booking(self, booking: GetBooking) -> Booking:
-        # check token first idk how to do that
+        if not DatabaseManager.verify_token(booking.token):
+            raise HTTPException(status_code=404, detail="User not found")
+        
         return BookingManager.find_booking(booking.booking_id) 
        
     @dataclass
     class GetRoom:
         token: str
         room_id: int
-
     def get_room(self, room: GetRoom) -> Room:
         # check token first idk how to do that
         searched_room = DatabaseManager.get_room(room.room_id)
