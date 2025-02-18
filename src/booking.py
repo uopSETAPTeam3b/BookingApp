@@ -19,14 +19,14 @@ class BookingManager(API):
         token: str
         datetime: int
         room_id: int
-
+    
     def book_room(self, booking: BookRoom) -> str:
         # check token first idk how to do that
         existing_booking = DatabaseManager.find_booking(booking.datetime, booking.room_id)
         if existing_booking:
-            raise HTTPException(400, {"error": "Room already booked"})
+            raise HTTPException(status_code= 409, detail="Room already booked")
         else:
-            DatabaseManager.add_booking(booking.datetime, booking.room_id, User("username"))
+            DatabaseManager.add_booking(booking.datetime, booking.room_id, booking.token)
             return "Booking successful"
     
     @dataclass
@@ -58,6 +58,7 @@ class BookingManager(API):
     @dataclass
     class GetBookings:
         token: str
+
     def get_bookings(self, bookings: GetBookings) -> list[Booking]:
         """Returns a list of active bookings for this user"""
         # check token first idk how to do that
@@ -67,6 +68,7 @@ class BookingManager(API):
     class GetBooking:
         token: str
         booking_id: int
+
     def get_booking(self, booking: GetBooking) -> Booking:
         # check token first idk how to do that
         return BookingManager.find_booking(booking.booking_id) 
@@ -75,6 +77,7 @@ class BookingManager(API):
     class GetRoom:
         token: str
         room_id: int
+
     def get_room(self, room: GetRoom) -> Room:
         # check token first idk how to do that
         searched_room = DatabaseManager.get_room(room.room_id)
