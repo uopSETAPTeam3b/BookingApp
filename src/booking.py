@@ -2,6 +2,7 @@ from fastapi import HTTPException
 from pydantic.dataclasses import dataclass
 from api import API
 from database import Room, Booking, User, DatabaseManager
+from notification import BookedRoom, CancelledRoom, ShareBooking, NotificationManager
 
 class BookingManager(API):
     prefix = "/booking"
@@ -30,6 +31,11 @@ class BookingManager(API):
             raise HTTPException(status_code= 409, detail="Room already booked")
         else:
             DatabaseManager.add_booking(booking.datetime, booking.room_id, booking.token)
+            bookedRoom = BookedRoom 
+            bookedRoom.room_id = booking.room_id
+            bookedRoom.time = booking.datetime
+            bookedRoom.user_email = DatabaseManager.get_email()
+            NotificationManager.booking_complete(bookedRoom)
             return "Booking successful"
     
     @dataclass
@@ -44,7 +50,11 @@ class BookingManager(API):
         if not booking:
             raise HTTPException(status_code=404, detail="Booking not found")
         else:
-            DatabaseManager.remove_booking(cancel.booking_id)
+            booking = DatabaseManager.remove_booking(cancel.booking_id)
+            canceledRoom = CancelledRoom
+            canceledRoom.room_id = booking.roomId
+            canceledRoom.time = booking.datetime
+            canceledRoom.user_email = DatabaseManager.get_email(booking.user)
             return "Booking cancelled"
         raise HTTPException(500, {"error": "use appropriate status code"})
     
@@ -60,6 +70,12 @@ class BookingManager(API):
         if not share_to:
             #status code needs checking
             raise HTTPException(status_code=404, detail="User not found")
+        booking = DatabaseManager.get_booking(share.booking_id)
+        shareBooking = ShareBooking
+        shareBooking.time = booking.datetime
+        shareBooking.booking_id = share.booking_id
+        shareBooking.user_email = DatabaseManager.get_email(share.username)
+        NotificationManager.booking_complete(ShareBooking)
         return ""
     
     @dataclass
