@@ -28,7 +28,6 @@ class BookingManager(API):
         self.router.add_api_route(
             "/get_room", self.get_room, methods=["POST"], response_model=Room
         )
-
     @dataclass
     class BookRoom:
         token: str
@@ -97,6 +96,13 @@ class BookingManager(API):
                 user_bookings.append(booking)
         return user_bookings
 
+    @dataclass
+    class GetBookingsForDate:
+        date: str
+    def get_bookings_for_date(self, bookings: GetBookingsForDate) -> list[Booking]:
+        """Returns a list of bookings for this date"""
+        return []
+    
     @dataclass
     class GetBooking:
         token: str

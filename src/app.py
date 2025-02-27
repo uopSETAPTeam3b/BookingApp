@@ -27,10 +27,7 @@ TEMPLATE = "template"
 print(os.path.join(BASE_DIR, TEMPLATE))
 templates = Jinja2Templates(os.path.join(BASE_DIR, TEMPLATE))
 
-R_404 = FileResponse(
-    os.path.join(os.path.dirname(__file__), STATIC, "404.html"), status_code=404
-)
-
+R_404 = FileResponse(os.path.join(BASE_DIR, STATIC, "404.html"), status_code=404)
 
 @app.get("/{path:path}")
 def index(request: Request, path):
@@ -45,6 +42,8 @@ def index(request: Request, path):
                 )
         else:
             return templates.TemplateResponse(path, {"request": request})
+    elif os.path.exists(template_file_path + ".html"):
+        return templates.TemplateResponse(path + ".html", {"request": request})
 
     file_path = os.path.abspath(os.path.join(STATIC, path if path else "index.html"))
     if not os.path.exists(file_path):
