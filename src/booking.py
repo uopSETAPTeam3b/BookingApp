@@ -11,6 +11,7 @@ class BookingManager(API):
         self.router.add_api_route("/cancel", self.cancel_room, methods=["POST"])
         self.router.add_api_route("/share", self.share_room, methods=["POST"])
         self.router.add_api_route("/get_bookings", self.get_bookings, methods=["POST"], response_model=list[Booking])
+        self.router.add_api_route("/get_bookings_for_date", self.get_bookings_for_date, methods=["POST"], response_model=list[Booking])
         self.router.add_api_route("/get_booking", self.get_booking, methods=["POST"], response_model=Booking)
         self.router.add_api_route("/get_room", self.get_room, methods=["POST"], response_model=Room)
 
@@ -45,6 +46,13 @@ class BookingManager(API):
         token: str
     def get_bookings(self, bookings: GetBookings) -> list[Booking]:
         """Returns a list of active bookings for this user"""
+        return []
+    
+    @dataclass
+    class GetBookingsForDate:
+        date: str
+    def get_bookings_for_date(self, bookings: GetBookingsForDate) -> list[Booking]:
+        """Returns a list of bookings for this date"""
         return []
     
     @dataclass
