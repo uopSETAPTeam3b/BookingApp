@@ -35,6 +35,7 @@ class BookingManager(API):
             bookedRoom.room_id = booking.room_id
             bookedRoom.time = booking.datetime
             bookedRoom.user_email = DatabaseManager.get_email()
+            bookedRoom = DatabaseManager.get_room(booking.room_id)
             NotificationManager.booking_complete(bookedRoom)
             return "Booking successful"
     
@@ -51,10 +52,12 @@ class BookingManager(API):
             raise HTTPException(status_code=404, detail="Booking not found")
         else:
             booking = DatabaseManager.remove_booking(cancel.booking_id)
-            canceledRoom = CancelledRoom
-            canceledRoom.room_id = booking.roomId
-            canceledRoom.time = booking.datetime
-            canceledRoom.user_email = DatabaseManager.get_email(booking.user)
+            cancelledRoom = CancelledRoom
+            cancelledRoom.room_id = booking.roomId
+            cancelledRoom.time = booking.datetime
+            cancelledRoom.user_email = DatabaseManager.get_email(booking.user)
+            cancelledRoom.room = DatabaseManager.get_room(booking.room_id)
+            NotificationManager.booking_cancelled(cancelledRoom)
             return "Booking cancelled"
         raise HTTPException(500, {"error": "use appropriate status code"})
     
@@ -72,10 +75,11 @@ class BookingManager(API):
             raise HTTPException(status_code=404, detail="User not found")
         booking = DatabaseManager.get_booking(share.booking_id)
         shareBooking = ShareBooking
+        shareBooking.room = DatabaseManager.get_room(booking.roomId)
         shareBooking.time = booking.datetime
         shareBooking.booking_id = share.booking_id
         shareBooking.user_email = DatabaseManager.get_email(share.username)
-        NotificationManager.booking_complete(ShareBooking)
+        NotificationManager.share_booking(ShareBooking)
         return ""
     
     @dataclass
