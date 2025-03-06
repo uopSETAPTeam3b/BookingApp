@@ -109,11 +109,20 @@ class BookingManager(API):
         booking_id: int
 
     def get_booking(self, booking: GetBooking) -> Booking:
+<<<<<<< HEAD
         if not self.db.verify_token(booking.token):
             raise HTTPException(status_code=404, detail="User not found")
 
         return self.db.find_booking(booking.booking_id)
 
+=======
+        return Booking(0, Room(0), 0)
+    
+    def get_rooms(self) -> list[Room]:
+        """Get all the rooms"""
+        return []
+    
+>>>>>>> 7781bac (added ability to mark booked rooms)
     @dataclass
     class GetRoom:
         token: str
