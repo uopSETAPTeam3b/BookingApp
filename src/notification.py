@@ -2,7 +2,7 @@ import smtplib
 from email.mime.text import MIMEText
 from pydantic.dataclasses import dataclass
 from fastapi import BackgroundTasks
-from datebase import get_Email
+#from database import get_Email
 @dataclass
 class BookedRoom:
     time: int
@@ -48,7 +48,7 @@ class NotificationManager:
     def booking_complete(self, booking: BookedRoom, background_tasks: BackgroundTasks) -> str:
         #Sends confirmation email when a room is booked.
         subject = "Room Booking Confirmation"
-        body = f" <html>
+        body = f""" <html>
             <body>
                 <h2>Room Booking Confirmation</h2>
                 <p>We are pleased to inform you that your room booking has been successfully completed. Below are the details of your booking:</p>
@@ -59,14 +59,14 @@ class NotificationManager:
                 <p>If you have any questions or need to make any changes, please contact us</p>
                 <p>Thank you</p>
             </body>
-        </html>"
+        </html>"""
         background_tasks.add_task(self.send_email, booking.user_email, subject, body)
         return "Booking confirmation email sent."
 
     def booking_cancelled(self, booking: CancelledRoom, background_tasks: BackgroundTasks)-> str: 
         #Sends notification email when a booking is cancelled.
         subject = "Booking Cancellation Notice"
-        body = f"<html>
+        body = f"""<html>
             <body>
                 <h2>Booking Cancellation Notice</h2>
                 <p>We need  to inform you that your booking has been cancelled. Below are the details of the cancelled booking:</p>
@@ -77,7 +77,7 @@ class NotificationManager:
                 <p>If you believe this cancellation was made in error or if you would like to reschedule, please contact Us.</p>
                 <p>Thank you</p>
             </body>
-        </html>"
+        </html>"""
         background_tasks.add_task(self.send_email, booking.user_email, subject, body)
         
         return "Cancellation email sent."
@@ -85,7 +85,7 @@ class NotificationManager:
     def share_booking(self, booking: ShareBooking, background_tasks: BackgroundTasks)-> str:
         #Sends email notification when a booking is shared.
         subject = "Booking Shared with You"
-        body = f"A booking (ID: ) has been shared with you. Time: .
+        body = f"""A booking (ID: ) has been shared with you. Time: .
         <html>
             <body>
                 <h2>Booking Shared with You</h2>
@@ -98,6 +98,6 @@ class NotificationManager:
                 </ul>
                 <p>Thank you.</p>
             </body>
-        </html>"
+        </html>"""
         background_tasks.add_task(self.send_email, booking.user_email, subject, body)
         return "Booking share email sent."
