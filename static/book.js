@@ -1,4 +1,4 @@
-bookings = []
+rooms = []
 
 // Setup Date
 let date = document.querySelector("#date")
@@ -38,7 +38,7 @@ async function updateBookingTable() {
         })
     })
 
-    bookings = await response.json()
+    rooms = await response.json()
     // wait till after request to clear table to prevent flicker
     table.innerHTML = '';
 
