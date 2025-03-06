@@ -13,6 +13,7 @@ class BookingManager(API):
         self.router.add_api_route("/get_bookings", self.get_bookings, methods=["POST"], response_model=list[Booking])
         self.router.add_api_route("/get_bookings_for_date", self.get_bookings_for_date, methods=["POST"], response_model=list[Booking])
         self.router.add_api_route("/get_booking", self.get_booking, methods=["POST"], response_model=Booking)
+        self.router.add_api_route("/get_rooms", self.get_rooms, methods=["POST"], response_model=list[Room])
         self.router.add_api_route("/get_room", self.get_room, methods=["POST"], response_model=Room)
 
     @dataclass
@@ -61,6 +62,10 @@ class BookingManager(API):
         booking_id: int
     def get_booking(self, booking: GetBooking) -> Booking:
         return Booking(0, Room(0), 0)
+    
+    def get_rooms(self) -> list[Room]:
+        """Get all the rooms"""
+        return []
     
     @dataclass
     class GetRoom:
