@@ -1,8 +1,10 @@
 {%set page="book"%}
 {%include "nav.html"%}
 
+<link rel="stylesheet" href="book.css">
+
 <button id="expand-filter">Filters</button>
-<section id="filter">
+<section id="filter" class="hidden">
     <input type="text" name="filter" id="filterbox">
 </section>
 <button id="pre"><-</button>
@@ -13,3 +15,4 @@
 <table id="bookings-table"></table>
 
 <script src="book.js"></script>
+<script src="filter.js"></script>
