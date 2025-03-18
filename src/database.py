@@ -22,8 +22,7 @@ class DatabaseManager:
     def __init__(self, file: str = "database.db", create_script: str = "src/create.sql"):
         pass
 
-
-    def create_database():
+    def create_database(self):
         conn = sqlite3.connect("booking_system.db")  
         cursor = conn.cursor()
         cursor.execute("PRAGMA foreign_keys = ON;")

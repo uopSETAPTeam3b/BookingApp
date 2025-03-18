@@ -3,6 +3,7 @@ from email.mime.text import MIMEText
 from pydantic.dataclasses import dataclass
 from fastapi import BackgroundTasks
 #from database import get_Email
+from database import Room, Booking, User
 @dataclass
 class BookedRoom:
     time: int
@@ -35,7 +36,7 @@ class NotificationManager:
         pass
 
     def send_email(self, recipient: str, subject: str, body: str):
-        #Sends an email notification.
+        """Sends an email notification."""
         msg = MIMEText(body)
         msg["Subject"] = subject
         msg["From"] = self.SMTP_USERNAME
@@ -46,7 +47,7 @@ class NotificationManager:
             server.sendmail(self.SMTP_USERNAME, recipient, msg.as_string())
 
     def booking_complete(self, booking: BookedRoom, background_tasks: BackgroundTasks) -> str:
-        #Sends confirmation email when a room is booked.
+        """Sends confirmation email when a room is booked."""
         subject = "Room Booking Confirmation"
         body = f""" <html>
             <body>
@@ -64,7 +65,7 @@ class NotificationManager:
         return "Booking confirmation email sent."
 
     def booking_cancelled(self, booking: CancelledRoom, background_tasks: BackgroundTasks)-> str: 
-        #Sends notification email when a booking is cancelled.
+        """Sends notification email when a booking is cancelled."""
         subject = "Booking Cancellation Notice"
         body = f"""<html>
             <body>
@@ -83,7 +84,7 @@ class NotificationManager:
         return "Cancellation email sent."
 
     def share_booking(self, booking: ShareBooking, background_tasks: BackgroundTasks)-> str:
-        #Sends email notification when a booking is shared.
+        """Sends email notification when a booking is shared."""
         subject = "Booking Shared with You"
         body = f"""A booking (ID: ) has been shared with you. Time: .
         <html>
