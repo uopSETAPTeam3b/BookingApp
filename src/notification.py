@@ -1,31 +1,33 @@
 import smtplib
 from email.mime.text import MIMEText
-
+from dotenv import load_dotenv
+import os
 from fastapi import BackgroundTasks
-from pydantic.dataclasses import dataclass
-
-# from database import get_Email
 from database import Booking, Room, User
+from typing import Optional
 
 class NotificationManager:
-    SMTP_SERVER = "smtp.gmail.com"
-    SMTP_PORT = 465  # SSL port
-    SMTP_USERNAME = "setupgrp3bnotify@gmail.com"  # SETUP address
-    SMTP_PASSWORD = "phlsdkyafhrpqgpc"  # app password
+    """Handles email notifications for room bookings."""
 
     def __init__(self):
+        load_dotenv()
+        self.SMTP_SERVER = "smtp.gmail.com"
+        self.SMTP_PORT = 465  
+        self.SMTP_USERNAME = str(os.getenv("smtp_username") or "default_username")
+        self.SMTP_PASSWORD = os.getenv("smtp_password") 
+        
         pass
 
-    def send_email(self, recipient: str, subject: str, body: str):
+    def send_email(self, recipient_email: str, subject: str, body: str):
         """Sends an email notification."""
         msg = MIMEText(body)
-        msg["Subject"] = subject
+        msg["Subject"] = subject or "No Subject"
         msg["From"] = self.SMTP_USERNAME
-        msg["To"] = recipient
+        msg["To"] = recipient_email
 
         with smtplib.SMTP_SSL(self.SMTP_SERVER, self.SMTP_PORT, timeout=10) as server:
-            server.login(self.SMTP_USERNAME, self.SMTP_PASSWORD)
-            server.sendmail(self.SMTP_USERNAME, recipient, msg.as_string())
+            server.login(self.SMTP_USERNAME , self.SMTP_PASSWORD) 
+            server.sendmail(self.SMTP_USERNAME, recipient_email, msg.as_string())
 
     def booking_complete(
         self, booking: Booking, background_tasks: BackgroundTasks

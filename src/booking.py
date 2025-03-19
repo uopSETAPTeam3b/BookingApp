@@ -36,7 +36,7 @@ class BookingManager(API):
         room_id: int
 
     def book_room(self, booking: BookRoom) -> str:
-        # check token first idk how to do that
+        """ Books a room from a (only) validated user """
         if not self.db.verify_token(booking.token):
             raise HTTPException(status_code=404, detail="User not found")
 
@@ -55,6 +55,7 @@ class BookingManager(API):
         booking_id: int
 
     def cancel_room(self, cancel: CancelRoom) -> str:
+        """ Cancels a room booking from a (only) validated user """
         if not self.db.verify_token(cancel.token):
             raise HTTPException(status_code=404, detail="User not found")
         booking = self.db.find_booking(cancel.booking_id)
@@ -71,6 +72,7 @@ class BookingManager(API):
         username: str
 
     def share_room(self, share: ShareRoom) -> str:
+        """ Shares a room booking from a validated user with another user """
         if not self.db.verify_token(share.token):
             raise HTTPException(status_code=404, detail="User not found")
         share_to = self.db.get_user(share.username)
@@ -86,7 +88,7 @@ class BookingManager(API):
         token: str
 
     def get_bookings(self, bookings: GetBookings) -> list[Booking]:
-        """Returns a list of active bookings for this user"""
+        """ Returns a list of active bookings for this user """
         if not self.db.verify_token(bookings.token):
             raise HTTPException(status_code=404, detail="User not found")
         all_bookings = self.db.get_all_bookings()
@@ -103,6 +105,7 @@ class BookingManager(API):
         booking_id: int
 
     def get_booking(self, booking: GetBooking) -> Booking:
+        """ Returns a single booking from a booking and user """
         if not self.db.verify_token(booking.token):
             raise HTTPException(status_code=404, detail="User not found")
 
@@ -114,7 +117,7 @@ class BookingManager(API):
         room_id: int
 
     def get_room(self, room: GetRoom) -> Room:
-        # check token first idk how to do that
+        """ Returns a room from a room ID """
         searched_room = self.db.get_room(room.room_id)
         if not searched_room:
             raise HTTPException(status_code=404, detail="Room not found")

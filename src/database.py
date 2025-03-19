@@ -32,87 +32,67 @@ class DatabaseManager:
         pass
 
     def create_database(self):
-        conn = sqlite3.connect("booking_system.db")
-        cursor = conn.cursor()
-        cursor.execute("PRAGMA foreign_keys = ON;")
-        cursor.execute(
-            """
-            CREATE TABLE IF NOT EXISTS User (
-                userId INTEGER PRIMARY KEY AUTOINCREMENT,
-                username TEXT NOT NULL,
-                password TEXT NOT NULL,
-                email TEXT NOT NULL UNIQUE,
-                token TEXT
-            );
-        """
-        )
-        cursor.execute(
-            """
-            CREATE TABLE IF NOT EXISTS Room (
-                roomId INTEGER PRIMARY KEY AUTOINCREMENT,
-                building TEXT NOT NULL,
-                capacity INTEGER NOT NULL,
-                type TEXT NOT NULL
-            );
-        """
-        )
-        cursor.execute(
-            """
-            CREATE TABLE IF NOT EXISTS Booking (
-                bookingId INTEGER PRIMARY KEY AUTOINCREMENT,
-                roomId INTEGER NOT NULL,
-                userId INTEGER NOT NULL,
-                time DATE NOT NULL,
-                FOREIGN KEY (roomId) REFERENCES Room(roomId) ON DELETE CASCADE,
-                FOREIGN KEY (userId) REFERENCES User(userId) ON DELETE CASCADE
-            );
-        """
-        )
-        conn.commit()
-        conn.close()
+        """create database and tables"""
+        pass
 
-    def get_email(self, user: str) -> str:
+    def get_email(self, user_id: int) -> str:
+        """ Gets a email from a user """
+        # takes a user_id and returns the email of the user
         email = ""
         return email
 
     def verify_token(self, token: str) -> bool:
+        """ Verifies the token """
         user = self.get_user(token)
         if not user:
             return False
         return True
 
     def find_booking(self, room: int, time: int) -> Booking:
-        # return booking object using room and time
+        """ Returns a booking if found at a room and time """
+        # query must check DB for booking at room and time
         return Booking(0, User("", ""), Room(0), 0)
 
-    def get_booking(self, id: int) -> Booking:
-        # return booking object using id
+    def get_booking(self, booking_id: int) -> Booking:
+        """ Returns a booking from a booking id """
+        # query must get the booking of booking_id
         return Booking(0, User("", ""), Room(0), 0)
 
     def add_booking(self, room: Room, time: int, token: str) -> None:
-        # add booking to database
+        """ Adds a booking to the database  """
+        # query must insert booking into database
+        # user is found from token
         user = self.get_user(token)
         if not user:
             return None
         return None
 
-    def remove_booking(self, id: int) -> Booking:
-        # remove booking from database
+    def remove_booking(self, booking_id: int) -> Booking:
+        """ Removes a booking from the database from booking id """
+        # delete booking from database
         booking = self.get_booking(id)
         return booking
 
     def get_all_bookings(self) -> list[Booking]:
-        # gets a list of all future bookings (not past)
+        """ Returns a list of all future/current bookings """
+        # query must get all future/current bookings
         return []
 
     def get_room(self, room_id: int) -> Room:
-        # get room object using room_id
+        """ Returns a room from a room id """
+        # query must get a room from room_id
         return Room(0)
 
     def get_user(self, token: str) -> User:
-        # get user object using token
+        """ Returns a user from a token """
+        # query must get a user from token
         return User("", "")
 
     def get_user_from_booking(self, booking_id: int) -> User:
-        # get user object using booking_id
+        """ Returns a user from a booking id """
+        # query must get a user from booking_id
         return User("", "")
+    def get_user_email(self, user: User) -> str:
+        """ Returns a user email from a user object """
+        # query must get a user email from user object
+        return ""
