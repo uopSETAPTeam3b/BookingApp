@@ -1,5 +1,5 @@
 import sqlite3
-
+import secrets
 from pydantic.dataclasses import dataclass
 
 
@@ -41,6 +41,11 @@ class DatabaseManager:
         email = ""
         return email
 
+    def create_token(self, user: User) -> str:
+        """ Creates and returns a token new for a user """
+        # query MUST insert token into the database that the user will use for the session
+        token = str(secrets.token_hex(32))
+        return token
     def verify_token(self, token: str) -> bool:
         """ Verifies the token """
         user = self.get_user(token)
@@ -92,6 +97,24 @@ class DatabaseManager:
         """ Returns a user from a booking id """
         # query must get a user from booking_id
         return User("", "")
+    
+    def get_user_from_username(self, username: str)-> User:
+        """ returns user from username """
+        # query must get the users details
+        email = ""
+        return User(username, email)
+    
+    def get_passwrd(username: str) -> str:
+        """ Returns a password for a user """
+        # query must get the users password
+        password = ""
+        return password
+    def create_user(self, username: str, password: str) -> str:
+        """ Create user in db """
+        user = User("", "")
+        token = self.create_token(user)
+        return token
+
     def get_user_email(self, user: User) -> str:
         """ Returns a user email from a user object """
         # query must get a user email from user object
