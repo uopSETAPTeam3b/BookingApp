@@ -3,7 +3,7 @@ from email.mime.text import MIMEText
 from dotenv import load_dotenv
 import os
 from fastapi import BackgroundTasks
-from database import Booking, Room, User
+from database import Booking, Room, User, DatabaseManager as db
 from typing import Optional
 
 class NotificationManager:
@@ -13,7 +13,7 @@ class NotificationManager:
         load_dotenv()
         self.SMTP_SERVER = "smtp.gmail.com"
         self.SMTP_PORT = 465  
-        self.SMTP_USERNAME = str(os.getenv("smtp_username") or "default_username")
+        self.SMTP_USERNAME = os.getenv("smtp_username")
         self.SMTP_PASSWORD = os.getenv("smtp_password") 
         
         pass
@@ -29,9 +29,7 @@ class NotificationManager:
             server.login(self.SMTP_USERNAME , self.SMTP_PASSWORD) 
             server.sendmail(self.SMTP_USERNAME, recipient_email, msg.as_string())
 
-    def booking_complete(
-        self, booking: Booking, background_tasks: BackgroundTasks
-    ) -> str:
+    def booking_complete(self, booking: Booking, background_tasks: BackgroundTasks) -> str:
         """Sends confirmation email when a room is booked."""
         subject = "Room Booking Confirmation"
         body = f""" <html>
@@ -46,18 +44,16 @@ class NotificationManager:
                 <p>Thank you</p>
             </body>
         </html>"""
-        background_tasks.add_task(self.send_email, booking.user.email, subject, body)
+        background_tasks.add_task(self.send_email(db.get_user_email(booking.user), subject, body))
         return "Booking confirmation email sent."
 
-    def booking_cancelled(
-        self, booking: Booking, background_tasks: BackgroundTasks
-    ) -> str:
+    def booking_cancelled(self, booking: Booking, background_tasks: BackgroundTasks) -> str:
         """Sends notification email when a booking is cancelled."""
         subject = "Booking Cancellation Notice"
         body = f"""<html>
             <body>
                 <h2>Booking Cancellation Notice</h2>
-                <p>We need  to inform you that your booking has been cancelled. Below are the details of the cancelled booking:</p>
+                <p>We need to inform you that your booking has been cancelled. Below are the details of the cancelled booking:</p>
                 <ul>
                     <li><strong>Room:</strong> {booking.room}</li>
                     <li><strong>Booking Time:</strong> {booking.time}</li>
@@ -66,7 +62,7 @@ class NotificationManager:
                 <p>Thank you</p>
             </body>
         </html>"""
-        background_tasks.add_task(self.send_email, booking.user_email, subject, body)
+        background_tasks.add_task(self.send_email( db.get_user_email(booking.user), subject, body))
 
         return "Cancellation email sent."
 
@@ -89,5 +85,5 @@ class NotificationManager:
                 <p>Thank you.</p>
             </body>
         </html>"""
-        background_tasks.add_task(self.send_email, booking.user_email, subject, body)
+        background_tasks.add_task(self.send_email(db.get_user_email(booking.user), subject, body))
         return "Booking share email sent."
