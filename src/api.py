@@ -1,5 +1,3 @@
-from collections import defaultdict
-from typing import Any, Callable
 from fastapi import APIRouter
 
 

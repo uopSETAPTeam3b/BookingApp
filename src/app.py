@@ -1,10 +1,13 @@
+import os
+
 from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse
 from fastapi.templating import Jinja2Templates
-from database import DatabaseManager
-from booking import BookingManager
+
 from account import AccountManager
-import os
+from booking import BookingManager
+from database import DatabaseManager
+
 # from notification import NotificationManager
 
 app = FastAPI()
@@ -37,7 +40,9 @@ def index(request: Request, path):
     if os.path.exists(template_file_path):
         if os.path.isdir(template_file_path):
             if os.path.exists(f"{template_file_path}/index.html"):
-                return templates.TemplateResponse(f"{path}/index.html", {"request": request})
+                return templates.TemplateResponse(
+                    f"{path}/index.html", {"request": request}
+                )
         else:
             return templates.TemplateResponse(path, {"request": request})
     elif os.path.exists(template_file_path + ".html"):
@@ -46,10 +51,8 @@ def index(request: Request, path):
     file_path = os.path.abspath(os.path.join(STATIC, path if path else "index.html"))
     if not os.path.exists(file_path):
         return R_404
-    elif not os.path.isfile(file_path):
+    if not os.path.isfile(file_path):
         if os.path.exists(f"{file_path}/index.html"):
             return FileResponse(f"{file_path}/index.html")
-        else:
-            return R_404
-    else:
-        return FileResponse(file_path)
+        return R_404
+    return FileResponse(file_path)
