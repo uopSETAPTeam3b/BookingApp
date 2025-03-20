@@ -1,4 +1,4 @@
-rooms = []
+bookings = []
 
 // Setup Date
 let date = document.querySelector("#date")
@@ -22,7 +22,6 @@ pre.addEventListener("click", () => {
     updateBookingTable()
 })
 
-
 async function updateBookingTable() {
     let table = document.getElementById("bookings-table")
 
@@ -38,7 +37,7 @@ async function updateBookingTable() {
         })
     })
 
-    rooms = await response.json()
+    bookings = await response.json()
     // wait till after request to clear table to prevent flicker
     table.innerHTML = '';
 
@@ -87,9 +86,10 @@ async function updateBookingTable() {
 
     bookings = await response.json()
     bookings = [
-        {time: 20, room: "1.0"},
-        {time: 21, room: "1.0"},
-        {time: 22, room: "1.0"}
+        {time: 11, room:"3.0"},
+        {time: 12, room: "3.0"},
+        {time: 13, room: "3.0"},
+        {time: 14, room: "3.0"}
     ]
 
 
@@ -103,3 +103,61 @@ async function updateBookingTable() {
 
 // Draw the table for the initial date
 updateBookingTable()
+
+let filterbutton = document.querySelector("button#expand-filter");
+
+filterbutton.addEventListener("click", () => {
+    let filterbox = document.querySelector("section#filter");
+    filterbox.classList.toggle("hidden");
+});
+
+
+// Function to update the display of the length slider and filter rows
+function updateLengthDisplay(value) {
+    document.getElementById('lengthDisplay').innerText = value + " Hour" + (value > 1 ? "s" : "");
+    filterTable();
+}
+
+// Function to update the display of the from-to slider and filter rows
+function updateFromToDisplay(value) {
+    document.getElementById('fromToDisplay').innerText = value + ":00";
+    filterTable();
+}
+
+// Function to filter the rows of the booking table based on the slider values
+function filterTable() {
+    let lengthValue = parseInt(document.getElementById('lengthRange').value);
+    let fromValue = parseInt(document.getElementById('fromToRange').value);
+    let toValue = fromValue + lengthValue;
+
+    // Ensure 'to' value does not exceed the limit of 24 hours
+    if (toValue > 24) toValue = 24;
+
+    let rows = document.querySelectorAll('#bookings-table tr');
+
+    // Skip the header row and start from index 1
+    for (let i = 1; i < rows.length; i++) {
+        let row = rows[i];
+        let visible = false;
+
+        // Check each checkbox in the row
+        row.querySelectorAll('input[type="checkbox"]').forEach((checkbox, index) => {
+            let time = parseInt(checkbox.getAttribute('time'));
+            // If the time is within the selected range, show this row
+            if (time >= fromValue && time < toValue) {
+                visible = true;
+            }
+        });
+
+        // Toggle row visibility
+        row.style.display = visible ? '' : 'none';
+    }
+}
+
+// Initial table update and filtering when page loads
+document.addEventListener('DOMContentLoaded', () => {
+    updateBookingTable().then(() => {
+        updateLengthDisplay(document.getElementById('lengthRange').value);
+        updateFromToDisplay(document.getElementById('fromToRange').value);
+    });
+});
