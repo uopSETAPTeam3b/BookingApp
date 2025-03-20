@@ -16,18 +16,12 @@ class BookingManager(API):
         self.router.add_api_route("/book", self.book_room, methods=["POST"])
         self.router.add_api_route("/cancel", self.cancel_room, methods=["POST"])
         self.router.add_api_route("/share", self.share_room, methods=["POST"])
-        self.router.add_api_route(
-            "/get_bookings",
-            self.get_bookings,
-            methods=["POST"],
-            response_model=list[Booking],
-        )
-        self.router.add_api_route(
-            "/get_booking", self.get_booking, methods=["POST"], response_model=Booking
-        )
-        self.router.add_api_route(
-            "/get_room", self.get_room, methods=["POST"], response_model=Room
-        )
+        self.router.add_api_route("/get_bookings", self.get_bookings, methods=["POST"], response_model=list[Booking])
+        self.router.add_api_route("/get_bookings_for_date", self.get_bookings_for_date, methods=["POST"], response_model=list[Booking])
+        self.router.add_api_route("/get_booking", self.get_booking, methods=["POST"], response_model=Booking)
+        self.router.add_api_route("/get_rooms", self.get_rooms, methods=["POST"], response_model=list[Room])
+        self.router.add_api_route("/get_room", self.get_room, methods=["POST"], response_model=Room)
+
     @dataclass
     class BookRoom:
         token: str
@@ -104,6 +98,13 @@ class BookingManager(API):
         return []
     
     @dataclass
+    class GetBookingsForDate:
+        date: str
+    def get_bookings_for_date(self, bookings: GetBookingsForDate) -> list[Booking]:
+        """Returns a list of bookings for this date"""
+        return []
+    
+    @dataclass
     class GetBooking:
         token: str
         booking_id: int
@@ -122,7 +123,10 @@ class BookingManager(API):
         """Get all the rooms"""
         return []
     
+<<<<<<< HEAD
 >>>>>>> 7781bac (added ability to mark booked rooms)
+=======
+>>>>>>> 9f85ba133794cdb964c8e53e93cdcdc838b3df22
     @dataclass
     class GetRoom:
         token: str

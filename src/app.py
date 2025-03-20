@@ -27,7 +27,10 @@ TEMPLATE = "template"
 print(os.path.join(BASE_DIR, TEMPLATE))
 templates = Jinja2Templates(os.path.join(BASE_DIR, TEMPLATE))
 
-R_404 = FileResponse(os.path.join(BASE_DIR, STATIC, "404.html"), status_code=404)
+R_404 = FileResponse(
+            os.path.join(BASE_DIR, STATIC, "404.html"), 
+            status_code=404
+            )
 
 @app.get("/{path:path}")
 def index(request: Request, path):
