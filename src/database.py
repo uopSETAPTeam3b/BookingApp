@@ -1,3 +1,4 @@
+import os
 import sqlite3
 import secrets
 from pydantic.dataclasses import dataclass
@@ -29,7 +30,15 @@ class DatabaseManager:
     def __init__(
         self, file: str = "database.db", create_script: str = "src/create.sql"
     ):
-        pass
+        db_exists = os.path.exists("database.db")
+        self.db = sqlite3.connect("database.db")
+        self.cur = self.db.cursor()
+
+        if not db_exists:
+            with open(create_script, "r") as f:
+                self.cur.executescript(f.read())
+
+        self.db.commit()
 
     def create_database(self):
         """create database and tables"""
@@ -46,6 +55,7 @@ class DatabaseManager:
         # query MUST insert token into the database that the user will use for the session
         token = str(secrets.token_hex(32))
         return token
+    
     def verify_token(self, token: str) -> bool:
         """ Verifies the token """
         user = self.get_user(token)
@@ -53,7 +63,7 @@ class DatabaseManager:
             return False
         return True
 
-    def find_booking(self, room: int, time: int) -> Booking:
+    def find_booking(self, room_id: int, time: int) -> Booking:
         """ Returns a booking if found at a room and time """
         # query must check DB for booking at room and time
         return Booking(0, User("", ""), Room(0), 0)
@@ -63,19 +73,19 @@ class DatabaseManager:
         # query must get the booking of booking_id
         return Booking(0, User("", ""), Room(0), 0)
 
-    def add_booking(self, room: Room, time: int, token: str) -> None:
+    def add_booking(self, room_id: int, time: int, token: str) -> Booking:
         """ Adds a booking to the database  """
         # query must insert booking into database
         # user is found from token
         user = self.get_user(token)
         if not user:
-            return None
-        return None
+            return Booking(0, User("", ""), Room(0), 0)
+        return Booking(0, User("", ""), Room(0), 0)
 
     def remove_booking(self, booking_id: int) -> Booking:
         """ Removes a booking from the database from booking id """
         # delete booking from database
-        booking = self.get_booking(id)
+        booking = self.get_booking(booking_id)
         return booking
 
     def get_all_bookings(self) -> list[Booking]:
@@ -104,11 +114,12 @@ class DatabaseManager:
         email = ""
         return User(username, email)
     
-    def get_passwrd(username: str) -> str:
+    def get_password(self, username: str) -> str:
         """ Returns a password for a user """
         # query must get the users password
         password = ""
         return password
+    
     def create_user(self, username: str, password: str) -> str:
         """ Create user in db """
         user = User("", "")

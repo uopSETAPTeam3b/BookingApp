@@ -7,18 +7,20 @@ from fastapi.templating import Jinja2Templates
 from account import AccountManager
 from booking import BookingManager
 from database import DatabaseManager
+from notification import NotificationManager
 
 # from notification import NotificationManager
 
 app = FastAPI()
 
 db = DatabaseManager()
+notif = NotificationManager()
+# app.include_router(notif.router)
+
 account = AccountManager()
 app.include_router(account.router)
-booking = BookingManager()
+booking = BookingManager(db, notif)
 app.include_router(booking.router)
-# notif = NotificationManager()
-# app.include_router(notif.router)
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 

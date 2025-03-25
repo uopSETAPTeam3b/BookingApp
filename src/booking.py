@@ -3,7 +3,7 @@ from pydantic.dataclasses import dataclass
 
 from api import API
 from database import Booking, DatabaseManager, Room, User
-from notification import BookedRoom, CancelledRoom, NotificationManager, ShareBooking
+from notification import NotificationManager
 
 
 class BookingManager(API):
@@ -44,7 +44,7 @@ class BookingManager(API):
         if existing_booking:
             raise HTTPException(status_code=409, detail="Room already booked")
         booked_room = self.db.add_booking(
-            booking.datetime, booking.room_id, booking.token
+            booking.room_id, booking.datetime, booking.token
         )
         self.nm.booking_complete(booked_room)
         return "Booking successful"
