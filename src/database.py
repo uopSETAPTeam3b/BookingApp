@@ -2,6 +2,7 @@ import os
 import sqlite3
 import secrets
 from pydantic.dataclasses import dataclass
+import create.sql as cs
 
 
 @dataclass
@@ -44,8 +45,14 @@ class DatabaseManager:
         """ Gets a email from a user """
         # takes a user_id and returns the email of the user
         # SELECT email FROM User WHERE user_id = ?;
-        email = ""
-        return email
+
+        self.cur.execute("SELECT email FROM User WHERE user_id = ?", (user_id,))
+        result = self.cur.fetchone()
+
+        if result:
+            email = result[0] # not result because it is a tuple
+        else:
+            return "Error. User not found"
 
     def create_token(self, user: User) -> str:
         """ Creates and returns a token new for a user """
@@ -61,17 +68,108 @@ class DatabaseManager:
             return False
         return True
 
-    def find_booking(self, room_id: int, time: int) -> Booking:
+    def get_user_from_booking(self, user_id: int) -> User:
+        """ Returns a User object from a user_id """
+        # Query to get user details from the User table
+        self.cur.execute(
+            '''
+            SELECT user_id, username, email FROM User WHERE user_id = ?
+            ''',
+            (user_id,)
+        )
+        result = self.cur.fetchone()  
+        if result:  
+            user_id = result[0]   # user_id
+            username = result[1]  # username
+            email = result[2]  # email
+
+            return User(user_id, username, email)
+        else:
+            return "Error. User not found."
+        
+    def get_user_from_booking(self, user_id: int) -> User:
+        """ Returns a User object from a user_id """
+        # Query to get user details from the User table
+        self.cur.execute(
+            '''
+            SELECT username, email FROM User WHERE user_id = ?
+            ''',
+            (user_id,)
+        )
+    
+        result = self.cur.fetchone() 
+        if result:
+            username = result[0]  # username
+            email = result[1]     # email
+
+            return User(username=username, email=email)
+        else:
+            return User(username="", email="") # empty user if not found
+
+
+    def find_booking(self, room_id: int, time: str) -> Booking:
         """ Returns a booking if found at a room and time """
-        # query must check DB for booking at room and time
-        #SELECT * FROM Booking WHERE room_id = ? AND start_time <= time;
-        return Booking(0, User("", ""), Room(0), 0)
+        # Query to find a booking in the Booking table for the specified room and time
+        self.cur.execute(
+            '''
+            SELECT b.booking_id, b.building_id, b.room_id, b.start_time, b.duration, b.access_code, ub.user_id
+            FROM Booking b
+            JOIN User_Booking ub ON b.booking_id = ub.booking_id
+            WHERE b.room_id = ? AND b.start_time <= ?
+            ''',
+            (room_id, time)
+        )
+        
+        result = self.cur.fetchone()
+
+        if result:
+            booking_id = result[0]  # booking_id
+            building_id = result[1]  # building_id
+            room_id = result[2]      # room_id
+            start_time = result[3]   # start_time
+            duration = result[4]      # duration
+            access_code = result[5]   # access_code
+            user_id = result[6]       # user_id
+
+            # Retrieve User object from user_id
+            user = self.get_user_from_booking(user_id)
+
+            return Booking(booking_id, user, Room(room_id), start_time)
+        else:
+            return "Booking doesn't exist."
 
     def get_booking(self, booking_id: int) -> Booking:
-        """ Returns a booking from a booking id """
-        # query must get the booking of booking_id
-        #SELECT * FROM Booking WHERE booking_id = ?;
-        return Booking(0, User("", ""), Room(0), 0)
+        """ Returns a booking from a booking_id """
+        # Query to get the booking details from the Booking table
+        self.cur.execute(
+            '''
+            SELECT b.booking_id, b.building_id, b.room_id, b.start_time, b.duration, b.access_code, ub.user_id
+            FROM Booking b
+            JOIN User_Booking ub ON b.booking_id = ub.booking_id
+            WHERE b.booking_id = ?
+            ''',
+            (booking_id,)
+        )
+        
+        result = self.cur.fetchone()
+
+        if result:  # Check if a booking was found
+            booking_id = result[0]  # booking_id
+            building_id = result[1]  # building_id
+            room_id = result[2]      # room_id
+            start_time = result[3]   # start_time
+            duration = result[4]     # duration
+            access_code = result[5]  # access_code
+            user_id = result[6]      # user_id
+
+            # Retrieve User object from user_id
+            user = self.get_user_from_booking(user_id)
+
+            room = self.get_room_by_id(room_id)
+
+            return Booking(booking_id, user, room, start_time)
+        else:
+            return "Booking doesn't exist."  
 
     def add_booking(self, room_id: int, time: int, token: str) -> Booking:
         """ Adds a booking to the database  """
@@ -84,32 +182,98 @@ class DatabaseManager:
             return Booking(0, User("", ""), Room(0), 0)
         return Booking(0, User("", ""), Room(0), 0)
 
-    def remove_booking(self, booking_id: int) -> Booking:
-        """ Removes a booking from the database from booking id """
-        # delete booking from database
-        #DELETE FROM Booking WHERE booking_id = ?;
-        #DELETE FROM User_Booking WHERE booking_id = ?;
+    def remove_booking(self, booking_id: int) -> bool:
+        """ Removes a booking from the database using the booking_id """
+    
         booking = self.get_booking(booking_id)
-        return booking
+        
+        if isinstance(booking, Booking):  # check if booking exists
+            
+            self.cur.execute("DELETE FROM User_Booking WHERE booking_id = ?", (booking_id,)) # Delete from User_Booking table
+            
+            self.cur.execute("DELETE FROM Booking WHERE booking_id = ?", (booking_id,)) # Delete from Booking table
+
+            self.db.commit() # commit to db
+            
+            return True  # successful removal
+        else:
+            return False  # booking didn't exist
+
 
     def get_all_bookings(self) -> list[Booking]:
         """ Returns a list of all future/current bookings """
-        # query must get all future/current bookings
-        #SELECT * FROM Booking WHERE datetime(start_time, '+' || duration || ' minutes') > datetime('now')ORDER BY start_time;
+        # Query to get all future/current bookings
+        self.cur.execute(
+            '''
+            SELECT b.booking_id, b.building_id, b.room_id, b.start_time, b.duration, b.access_code, ub.user_id
+            FROM Booking b
+            JOIN User_Booking ub ON b.booking_id = ub.booking_id
+            WHERE datetime(b.start_time, '+' || b.duration || ' minutes') > datetime('now')
+            ORDER BY b.start_time;
+            '''
+        )
+        
+        results = self.cur.fetchall()  # Fetch all matching bookings
+        bookings = []  # List to hold Booking objects
 
-        return []
+        for result in results:
+            booking_id = result[0]  # booking_id
+            building_id = result[1]  # building_id
+            room_id = result[2]      # room_id
+            start_time = result[3]   # start_time
+            duration = result[4]      # duration
+            access_code = result[5]   # access_code
+            user_id = result[6]       # user_id
+
+            # Retrieve User object from user_id
+            user = self.get_user_from_booking(user_id)
+
+            # Create Room object
+            room = Room(id=room_id)
+
+            # Create Booking object and append to the list
+            bookings.append(Booking(id=booking_id, user=user, room=room, time=start_time))
+
+        return bookings  # Return the list of Booking objects
+
 
     def get_room(self, room_id: int) -> Room:
         """ Returns a room from a room id """
-        # query must get a room from room_id
-        #SELECT * FROM Room WHERE room_id = ?;
-        return Room(0)
+        # Query to get a room from the Room table
+        self.cur.execute(
+            '''
+            SELECT room_id FROM Room WHERE room_id = ?;
+            ''',
+            (room_id,)
+        )
+        
+        result = self.cur.fetchone() 
+
+        if result: 
+            return Room(id=result[0]) 
+        else:
+            return "Room not found." 
 
     def get_room_facilities(self, room_id: int) -> list[str]:
         """ Returns a list of facilities for a room """
-        # query must get a list of facilities for a room
-        #SELECT r.*, GROUP_CONCAT(f.facility_id) AS facility_ids FROM Room r LEFT JOIN Room_Facility rf ON r.room_id = rf.room_id LEFT JOIN Facility f ON rf.facility_id = f.facility_id WHERE r.room_id = ? GROUP BY r.room_id;
-        return []
+        # Query to get a list of facilities for the specified room
+
+        #set below f.facility_id to f.facility_name when the sql file is changed
+        self.cur.execute(
+            '''
+            SELECT f.facility_id 
+            FROM Facility f
+            LEFT JOIN Room_Facility rf ON f.facility_id = rf.facility_id
+            WHERE rf.room_id = ?;
+            ''',
+            (room_id,)
+        )
+        
+        results = self.cur.fetchall()  # Fetch all matching facilities
+        facilities = [result[0] for result in results]  # Extract facility_ids into a list
+
+        return facilities  # currently this returns ID's. Need to return actual facilities when necessary change is made in the sql file.
+
     def get_user(self, token: str) -> User:
         """ Returns a user from a token """
         # query must get a user from token
@@ -119,7 +283,7 @@ class DatabaseManager:
     def get_user_from_booking(self, booking_id: int) -> User:
         """ Returns a user from a booking id """
         # query must get a user from booking_id
-        #SELECT u.* FROM User u JOIN User_Booking ub ON u.user_id = ub.user_id WHERE ub.booking_id = ?;
+        # SELECT u.* FROM User u JOIN User_Booking ub ON u.user_id = ub.user_id WHERE ub.booking_id = ?;
         return User("", "")
     
     def get_user_from_username(self, username: str)-> User:
@@ -148,3 +312,7 @@ class DatabaseManager:
         # query must get a user email from user object
         #SELECT email FROM User WHERE user_id = ?;
         return ""
+    
+    def close(self): # for testing purposes
+        self.db.close()
+        
