@@ -3,6 +3,9 @@ import sqlite3
 import secrets
 from pydantic.dataclasses import dataclass
 import create.sql as cs
+from datetime import datetime
+from typing import Optional, List
+
 
 
 @dataclass
@@ -67,45 +70,61 @@ class DatabaseManager:
         if not user:
             return False
         return True
-
-    def get_user_from_booking(self, user_id: int) -> User:
-        """ Returns a User object from a user_id """
-        # Query to get user details from the User table
-        self.cur.execute(
-            '''
-            SELECT user_id, username, email FROM User WHERE user_id = ?
-            ''',
-            (user_id,)
-        )
-        result = self.cur.fetchone()  
-        if result:  
-            user_id = result[0]   # user_id
-            username = result[1]  # username
-            email = result[2]  # email
-
-            return User(user_id, username, email)
-        else:
-            return "Error. User not found."
-        
-    def get_user_from_booking(self, user_id: int) -> User:
-        """ Returns a User object from a user_id """
-        # Query to get user details from the User table
-        self.cur.execute(
-            '''
-            SELECT username, email FROM User WHERE user_id = ?
-            ''',
-            (user_id,)
-        )
     
-        result = self.cur.fetchone() 
-        if result:
-            username = result[0]  # username
-            email = result[1]     # email
+    def get_user(self, token: str) -> Optional[User]:
+        """Get user from authentication token"""
+        self.cur.execute(
+            """
+            SELECT u.user_id, u.username, u.email, u.role 
+            FROM User u 
+            JOIN Authentication a ON u.user_id = a.user_id 
+            WHERE a.token = ?
+            """,
+            (token,)
+        )
+        if result := self.cur.fetchone():
+            return User(
+                id=result["user_id"],
+                username=result["username"],
+                email=result["email"],
+                role=result["role"]
+            )
+        return None
 
-            return User(username=username, email=email)
-        else:
-            return User(username="", email="") # empty user if not found
+    def get_user_from_booking(self, booking_id: int) -> Optional[User]:
+        """Get user associated with a booking"""
+        self.cur.execute(
+            """
+            SELECT u.user_id, u.username, u.email, u.role
+            FROM User u 
+            JOIN User_Booking ub ON u.user_id = ub.user_id 
+            WHERE ub.booking_id = ?
+            """,
+            (booking_id,)
+        )
+        if result := self.cur.fetchone():
+            return User(
+                id=result["user_id"],
+                username=result["username"],
+                email=result["email"],
+                role=result["role"]
+            )
+        return None
 
+    def get_user_from_username(self, username: str) -> Optional[User]:
+        """Get user by username"""
+        self.cur.execute(
+            "SELECT user_id, username, email, role FROM User WHERE username = ?",
+            (username,)
+        )
+        if result := self.cur.fetchone():
+            return User(
+                id=result["user_id"],
+                username=result["username"],
+                email=result["email"],
+                role=result["role"]
+            )
+        return None
 
     def find_booking(self, room_id: int, time: str) -> Booking:
         """ Returns a booking if found at a room and time """
