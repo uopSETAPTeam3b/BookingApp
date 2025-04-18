@@ -71,6 +71,22 @@ class DatabaseManager:
             return False
         return True
     
+    def create_user(self, username: str, password: str, email: str) -> Optional[str]:
+        """Create a new user and return authentication token"""
+        try:
+            self.cur.execute(
+                """
+                INSERT INTO User (username, password, email, role) 
+                VALUES (?, ?, ?, 'user')
+                """,
+                (username, password, email)
+            )
+            user_id = self.cur.lastrowid
+            self.db.commit()
+            return self.create_token(user_id)
+        except sqlite3.IntegrityError:
+            return None
+    
     def get_user(self, token: str) -> Optional[User]:
         """Get user from authentication token"""
         self.cur.execute(
@@ -124,6 +140,27 @@ class DatabaseManager:
                 email=result["email"],
                 role=result["role"]
             )
+        return None
+    
+    def get_password(self, username: str) -> Optional[str]:
+        """Get hashed password for a user"""
+        self.cur.execute(
+            "SELECT password FROM User WHERE username = ?",
+            (username,)
+        )
+        if result := self.cur.fetchone():
+            return result["password"]
+        return None
+    
+        
+    def get_user_email(self, user_id: int) -> Optional[str]:
+        """Get email from user_id"""
+        self.cur.execute(
+            "SELECT email FROM User WHERE user_id = ?",
+            (user_id,)
+        )
+        if result := self.cur.fetchone():
+            return result["email"]
         return None
 
     def find_booking(self, room_id: int, time: str) -> Booking:
@@ -292,45 +329,6 @@ class DatabaseManager:
         facilities = [result[0] for result in results]  # Extract facility_ids into a list
 
         return facilities  # currently this returns ID's. Need to return actual facilities when necessary change is made in the sql file.
-
-    def get_user(self, token: str) -> User:
-        """ Returns a user from a token """
-        # query must get a user from token
-        #SELECT u.* FROM User u JOIN Authentication a ON u.user_id = a.user_id WHERE a.token = ?;
-        return User("", "")
-
-    def get_user_from_booking(self, booking_id: int) -> User:
-        """ Returns a user from a booking id """
-        # query must get a user from booking_id
-        # SELECT u.* FROM User u JOIN User_Booking ub ON u.user_id = ub.user_id WHERE ub.booking_id = ?;
-        return User("", "")
-    
-    def get_user_from_username(self, username: str)-> User:
-        """ returns user from username """
-        # query must get the users details
-        #SELECT * FROM User WHERE username = ?;
-        email = ""
-        return User(username, email)
-    
-    def get_password(self, username: str) -> str:
-        """ Returns a password for a user """
-        # query must get the users password
-        #SELECT password FROM User WHERE username = ?;
-        password = ""
-        return password
-    
-    def create_user(self, username: str, password: str) -> str:
-        """ Create user in db """
-        #INSERT INTO User (username, password, email, role) VALUES (?, ?, ?, 'user');
-        user = User("", "")
-        token = self.create_token(user)
-        return token
-
-    def get_user_email(self, user: User) -> str:
-        """ Returns a user email from a user object """
-        # query must get a user email from user object
-        #SELECT email FROM User WHERE user_id = ?;
-        return ""
     
     def close(self): # for testing purposes
         self.db.close()
