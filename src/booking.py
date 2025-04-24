@@ -2,7 +2,7 @@ from fastapi import HTTPException
 from pydantic.dataclasses import dataclass
 
 from api import API
-from database import Booking, DatabaseManager, Room, User
+from database import Booking, DatabaseManager, Room
 from notification import NotificationManager
 
 

@@ -2,7 +2,6 @@ import os
 import sqlite3
 import secrets
 from pydantic.dataclasses import dataclass
-import create.sql as cs
 from datetime import datetime
 from typing import Optional, List
 
@@ -34,8 +33,8 @@ class DatabaseManager:
     def __init__(
         self, file: str = "database.db", create_script: str = "src/create.sql"
     ):
-        db_exists = os.path.exists("database.db")
-        self.db = sqlite3.connect("database.db")
+        db_exists = os.path.exists(file)
+        self.db = sqlite3.connect(file)
         self.cur = self.db.cursor()
 
         if not db_exists:
@@ -53,9 +52,8 @@ class DatabaseManager:
         result = self.cur.fetchone()
 
         if result:
-            email = result[0] # not result because it is a tuple
-        else:
-            return "Error. User not found"
+            return result[0] # not result because it is a tuple
+        return "Error. User not found"
 
     def create_token(self, user: User) -> str:
         """ Creates and returns a token new for a user """
@@ -100,10 +98,10 @@ class DatabaseManager:
         )
         if result := self.cur.fetchone():
             return User(
-                id=result["user_id"],
+                #id=result["user_id"],
                 username=result["username"],
                 email=result["email"],
-                role=result["role"]
+                #role=result["role"]
             )
         return None
 
@@ -120,10 +118,10 @@ class DatabaseManager:
         )
         if result := self.cur.fetchone():
             return User(
-                id=result["user_id"],
+                #id=result["user_id"],
                 username=result["username"],
                 email=result["email"],
-                role=result["role"]
+                #role=result["role"]
             )
         return None
 
@@ -135,10 +133,10 @@ class DatabaseManager:
         )
         if result := self.cur.fetchone():
             return User(
-                id=result["user_id"],
+                #id=result["user_id"],
                 username=result["username"],
                 email=result["email"],
-                role=result["role"]
+                #role=result["role"]
             )
         return None
     
@@ -221,7 +219,7 @@ class DatabaseManager:
             # Retrieve User object from user_id
             user = self.get_user_from_booking(user_id)
 
-            room = self.get_room_by_id(room_id)
+            room = self.get_room(room_id)
 
             return Booking(booking_id, user, room, start_time)
         else:

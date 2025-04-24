@@ -17,7 +17,7 @@ db = DatabaseManager()
 notif = NotificationManager()
 # app.include_router(notif.router)
 
-account = AccountManager()
+account = AccountManager(db)
 app.include_router(account.router)
 booking = BookingManager(db, notif)
 app.include_router(booking.router)
