@@ -12,7 +12,6 @@ from notification import NotificationManager
 # from notification import NotificationManager
 
 app = FastAPI()
-
 if os.environ.get("PYTEST_VERSION") is not None:
     STATIC = "../static"
     DatabaseManager("database_test.db")
