@@ -1,171 +1,164 @@
-bookings = []
+let bookings = [];
 
 // Setup Date
-let date = document.querySelector("#date")
+let date = document.querySelector("#date");
 date.valueAsDate = new Date();
 date.min = new Date().toISOString().split("T")[0];
 
-// Next Button
+// Next & Previous Buttons
 let next = document.querySelector("#next");
 next.addEventListener("click", () => {
-    let date = document.querySelector("#date")
     date.stepUp();
-    updateBookingTable()
-})
-
-// Pre Button
-let pre = document.querySelector("#pre");
-pre.addEventListener("click", () => {
-    let date = document.querySelector("#date")
-    if (new Date(date.value) < new Date().setHours(0, 0, 0, 0)) return;
-    date.stepDown();
-    updateBookingTable()
-})
-
-function renderBookingTable(rooms, bookings) {
-    let table = document.getElementById("bookings-table")
-
-    table.innerHTML = '';
-
-    // Place the time headings onto the table
-    let header = document.createElement("tr")
-    let room_header = document.createElement("th")
-    room_header.textContent = "Room/Time"
-    header.appendChild(room_header)
-    for (let i = 0; i < 24; i++) {
-        let time = document.createElement("th")
-        time.textContent = `${i.toString()}:00`
-        header.appendChild(time)
-    }
-    table.appendChild(header)
-
-
-    // Place the rooms and the checkboxes in the table
-    for (let room of rooms) {
-        let row = document.createElement("tr")
-        room_name = document.createElement("th")
-        room_name.textContent = room
-        row.appendChild(room_name)
-        for (let i = 0; i < 24; i++) {
-            let booking = document.createElement("td")
-            let checkbox = document.createElement("input")
-            checkbox.type = "checkbox"
-            checkbox.checked = false
-            checkbox.disabled = false
-            checkbox.setAttribute("time", i)
-            checkbox.setAttribute("room", room)
-            booking.appendChild(checkbox);
-            row.appendChild(booking)
-        }
-        table.appendChild(row)
-    }
-
-    // mark booked rooms
-    for (let booking of bookings) {
-        checkbox = document.querySelector(`input[type="checkbox"][time="${booking.time}"][room="${booking.room}"]`)
-        checkbox.disabled = true
-        checkbox.checked = true
-    }
-
-}
-
-async function updateBookingTable() {
-
-    let date = document.querySelector("#date");
-
-    let response = await fetch("/booking/get_rooms", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-            date: new Date(date.value).toString()
-        })
-    })
-
-    bookings = await response.json()
-
-    // Get bookings for current date
-    response = await fetch("/booking/get_bookings_for_date", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-            date: new Date(date.value).toString()
-        })
-    })
-
-    bookings = await response.json()
-    bookings = [
-        { time: 11, room: "3.0" },
-        { time: 12, room: "3.0" },
-        { time: 13, room: "3.0" },
-        { time: 14, room: "3.0" }
-    ]
-
-    function applyFilters(rooms, bookings) {
-        return rooms;
-    }
-    let rooms = applyFilters(["1.0", "2.0", "3.0", "4.0", "5.0", "6.0", "7.0", "8.0", "9.0"], bookings)
-
-    renderBookingTable(rooms, bookings);
-}
-
-// Draw the table for the initial date
-updateBookingTable()
-
-let filterbutton = document.querySelector("button#expand-filter");
-
-filterbutton.addEventListener("click", () => {
-    let filterbox = document.querySelector("section#filter");
-    filterbox.classList.toggle("hidden");
+    updateBookingTable();
 });
 
+let pre = document.querySelector("#pre");
+pre.addEventListener("click", () => {
+    if (new Date(date.value) < new Date().setHours(0, 0, 0, 0)) return;
+    date.stepDown();
+    updateBookingTable();
+});
 
-// Function to update the display of the length slider and filter rows
+// Render Table
+function renderBookingTable(rooms, bookings) {
+    let table = document.getElementById("bookings-table");
+    table.innerHTML = '';
+
+    let header = document.createElement("tr");
+    let room_header = document.createElement("th");
+    room_header.textContent = "Room/Time";
+    header.appendChild(room_header);
+
+    for (let i = 0; i < 24; i++) {
+        let time = document.createElement("th");
+        time.textContent = `${i}:00`;
+        header.appendChild(time);
+    }
+    table.appendChild(header);
+
+    for (let room of rooms) {
+        let row = document.createElement("tr");
+        let room_name = document.createElement("th");
+        room_name.textContent = room;
+        row.appendChild(room_name);
+
+        for (let i = 0; i < 24; i++) {
+            let booking = document.createElement("td");
+            let checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.checked = false;
+            checkbox.disabled = false;
+            checkbox.setAttribute("time", i);
+            checkbox.setAttribute("room", room);
+            booking.appendChild(checkbox);
+            row.appendChild(booking);
+        }
+        table.appendChild(row);
+    }
+
+    for (let booking of bookings) {
+        let checkbox = document.querySelector(`input[type="checkbox"][time="${booking.time}"][room="${booking.room}"]`);
+        if (checkbox) {
+            checkbox.disabled = true;
+            checkbox.checked = true;
+        }
+    }
+}
+
+// Fetch and Update Bookings
+async function updateBookingTable() {
+    let response = await fetch("/booking/get_rooms", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date: new Date(date.value).toString() })
+    });
+
+    const rooms = await response.json();
+
+    response = await fetch("/booking/get_bookings_for_date", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date: new Date(date.value).toString() })
+    });
+
+    bookings = await response.json();
+
+    // Add fixed bookings (will persist before filtering)
+    bookings = [
+        ...bookings,
+        { time: 11, room: "3.0" },
+        { time: 12, room:"4.0" },
+        { time: 9, room:"2.0" },
+        {time: 14, room:"5.0" }
+        
+    ];
+
+    // Render full unfiltered view initially
+    renderBookingTable(["1.0", "2.0", "3.0", "4.0", "5.0", "6.0", "7.0", "8.0", "9.0"], bookings);
+}
+
+// Filter Toggle & Reset From Hour
+let filterbutton = document.querySelector("button#expand-filter");
+filterbutton.addEventListener("click", () => {
+    const filterbox = document.querySelector("section#filter");
+    const fromSlider = document.getElementById("fromToRange");
+
+    const nowHidden = filterbox.classList.toggle("hidden");
+
+    // Reset 'From' when filter opens
+    if (!nowHidden) {
+        fromSlider.value = -1;
+        document.getElementById('fromToDisplay').innerText = "Select Time";
+    }
+});
+
 function updateLengthDisplay(value) {
     document.getElementById('lengthDisplay').innerText = value + " Hour" + (value > 1 ? "s" : "");
     filterTable();
 }
 
-// Function to update the display of the from-to slider and filter rows
 function updateFromToDisplay(value) {
-    document.getElementById('fromToDisplay').innerText = value + ":00";
+    const display = document.getElementById('fromToDisplay');
+    if (parseInt(value) === -1) {
+        display.innerText = "Select Time";
+        return;
+    }
+    display.innerText = value + ":00";
     filterTable();
 }
 
-// Function to filter the rows of the booking table based on the slider values
+// Filtering Logic
+function applyFilters(rooms, bookings) {
+    const lengthValue = parseInt(document.getElementById('lengthRange').value);
+    const fromValue = parseInt(document.getElementById('fromToRange').value);
+    if (fromValue === -1 || isNaN(fromValue)) return rooms;
+
+    const toValue = fromValue + lengthValue;
+    if (toValue > 24) return [];
+
+    const bookedSet = new Set(bookings.map(b => `${b.room}-${b.time}`));
+    return rooms.filter(room => {
+        for (let t = fromValue; t < toValue; t++) {
+            if (bookedSet.has(`${room}-${t}`)) return false;
+        }
+        return true;
+    });
+}
+
 function filterTable() {
-    let lengthValue = parseInt(document.getElementById('lengthRange').value);
-    let fromValue = parseInt(document.getElementById('fromToRange').value);
-    let toValue = fromValue + lengthValue;
+    const fromValue = parseInt(document.getElementById('fromToRange').value);
+    const allRooms = ["1.0", "2.0", "3.0", "4.0", "5.0", "6.0", "7.0", "8.0", "9.0"];
 
-    // Ensure 'to' value does not exceed the limit of 24 hours
-    if (toValue > 24) toValue = 24;
-
-    let rows = document.querySelectorAll('#bookings-table tr');
-
-    // Skip the header row and start from index 1
-    for (let i = 1; i < rows.length; i++) {
-        let row = rows[i];
-        let visible = false;
-
-        // Check each checkbox in the row
-        row.querySelectorAll('input[type="checkbox"]').forEach((checkbox, index) => {
-            let time = parseInt(checkbox.getAttribute('time'));
-            // If the time is within the selected range, show this row
-            if (time >= fromValue && time < toValue) {
-                visible = true;
-            }
-        });
-
-        // Toggle row visibility
-        row.style.display = visible ? '' : 'none';
+    if (fromValue === -1 || isNaN(fromValue)) {
+        // Show all rooms with bookings (no filter applied yet)
+        renderBookingTable(allRooms, bookings);
+    } else {
+        const filteredRooms = applyFilters(allRooms, bookings);
+        renderBookingTable(filteredRooms, bookings);
     }
 }
 
-// Initial table update and filtering when page loads
+// Initialise
 document.addEventListener('DOMContentLoaded', () => {
     updateBookingTable().then(() => {
         updateLengthDisplay(document.getElementById('lengthRange').value);
