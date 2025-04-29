@@ -1,5 +1,4 @@
 async function onload() {
-    console.log("onload");
     const token = localStorage.getItem("token");
     //const response = await fetch("/api/booking/get_user_bookings");
     const list = document.getElementById("bookingList");
@@ -28,7 +27,6 @@ async function onload() {
         list.innerHTML = "<li>No bookings found.</li>";
         return;
     }
-    console.log("here");
     displayBookings(bookings);
 
 }
@@ -43,5 +41,4 @@ function displayBookings(bookings) {
         list.appendChild(li);
     });
 }
-console.log("here2");
 document.addEventListener('DOMContentLoaded', onload);

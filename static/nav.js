@@ -8,14 +8,13 @@ function onload() {
         window.location.href = "/home";
     });
     bookButton.addEventListener("click", () => {
-        console.log("book button clicked");
         window.location.href = "/book";
     });
     bookingsButton.addEventListener("click", () => {
         window.location.href = "/booking";
     });
     loginButton.addEventListener("click", () => {
-        window.location.href = "/login";
+        window.location.href = "/Auth_Page";
     });
 }
 document.addEventListener('DOMContentLoaded', onload);
