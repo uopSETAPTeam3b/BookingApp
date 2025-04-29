@@ -13,13 +13,15 @@ from notification import NotificationManager
 
 app = FastAPI()
 
-db = DatabaseManager()
+if os.environ.get("PYTEST_VERSION") is not None:
+    DatabaseManager("database_test.db")
+
 notif = NotificationManager()
 # app.include_router(notif.router)
 
-account = AccountManager(db)
+account = AccountManager()
 app.include_router(account.router)
-booking = BookingManager(db, notif)
+booking = BookingManager(notif)
 app.include_router(booking.router)
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -32,7 +34,6 @@ templates = Jinja2Templates(os.path.join(BASE_DIR, TEMPLATE))
 R_404 = FileResponse(
     os.path.join(os.path.dirname(__file__), STATIC, "404.html"), status_code=404
 )
-
 
 @app.get("/{path:path}")
 def index(request: Request, path):
@@ -56,3 +57,4 @@ def index(request: Request, path):
             return FileResponse(f"{file_path}/index.html")
         return R_404
     return FileResponse(file_path)
+

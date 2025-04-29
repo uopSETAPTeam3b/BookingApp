@@ -2,14 +2,13 @@ from collections import defaultdict
 from datetime import datetime
 from dataclasses import dataclass
 from api import API
-from database import User, DatabaseManager
+from database import User, DB
 
 class AccountManager(API):
     prefix = "/account"
 
-    def __init__(self, db: DatabaseManager):
+    def __init__(self):
         super().__init__()
-        self.db = db
         self.router.add_api_route("/login", self.login, methods=["POST"])
         self.router.add_api_route("/logout", self.logout, methods=["POST"])
         self.router.add_api_route("/register", self.register, methods=["POST"])
@@ -20,25 +19,26 @@ class AccountManager(API):
         username: str
         password: str
 
-    def login(self, login: Login) -> str:
+    async def login(self, login: Login) -> str:
         # Needs to return either a token or a error message for the client (probably json)
         """ Returns the users token if login succeful"""
-        user: User = self.db.get_user_from_username(login.username)
-        user_password = self.db.get_password(user)
-        if login.password == user_password:
-            self.reset_failed_attempts(user.username)
-            return self.db.create_token(user) #successful login
-        if self.get_failed_attempts(user.username) > 3:
-            return "" #error, lock out user or require email verify or pass reset
-        self.record_failed_attempt(login.username)
-        return "" #error need help ben pls
+        async with DB() as db:
+            user: User = await db.get_user_from_username(login.username)
+            user_password = await db.get_password(user)
+            if login.password == user_password:
+                self.reset_failed_attempts(user.username)
+                return await db.create_token(user) #successful login
+            if self.get_failed_attempts(user.username) > 3:
+                return "" #error, lock out user or require email verify or pass reset
+            self.record_failed_attempt(login.username)
+            return "" #error need help ben pls
 
     @dataclass
     class Logout:
         token: str
 
-    def logout(self, logout: Logout) -> None:
-        pass
+    def logout(self, logout: Logout) -> str:
+        return ""
 
     @dataclass
     class Register:
@@ -46,13 +46,15 @@ class AccountManager(API):
         password: str
 
     # Needs to return either a token or an error message for the client (probably json)
-    def register(self, register: Register) -> str:
+    async def register(self, register: Register) -> str:
         """ creates user and returns token """
-        user = self.db.get_user_from_username(register.username)
-        if user is not None:
-            token = self.db.create_user(register.username, register.password)
-            return token
-        return "" #error
+        async with DB() as db:
+            user = await db.get_user_from_username(register.username)
+            if user is None:
+                token = await db.create_user(register.username, register.password, "")
+                print(f"OMG the token is {token}")
+                return token or ""
+            return ""  # error
 
     def record_failed_attempt(self,username: str):
         """Record a failed login attempt for a user."""

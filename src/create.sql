@@ -45,7 +45,7 @@ CREATE TABLE Facility (
     facility_quantity INTEGER NOT NULL,
     facility_availability_status TEXT NOT NULL CHECK (facility_availability_status IN ('available', 'unavailable')) DEFAULT 'available'
 );
-# this table needs an additional attribute to show the facility type for the get_room_facilities() to work. Till this is sorted, the ftn will return facility_id for now. Will update this later.
+-- this table needs an additional attribute to show the facility type for the get_room_facilities() to work. Till this is sorted, the ftn will return facility_id for now. Will update this later.
 
 CREATE TABLE Booking (
     booking_id INTEGER PRIMARY KEY AUTOINCREMENT,
