@@ -24,7 +24,7 @@ app.include_router(booking.router)
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
-STATIC = "static"
+STATIC = "../static"
 TEMPLATE = "template"
 print(os.path.join(BASE_DIR, TEMPLATE))
 templates = Jinja2Templates(os.path.join(BASE_DIR, TEMPLATE))
