@@ -1,5 +1,7 @@
+import {renderBookingTable} from "./book.js"
+
 // Filtering Logic
-function applyFilters(rooms, bookings) {
+export function applyFilters(rooms, bookings) {
     const lengthValue = parseInt(document.getElementById('lengthRange').value);
     const fromValue = parseInt(document.getElementById('fromToRange').value);
     if (fromValue === -1 || isNaN(fromValue)) return rooms;
@@ -16,21 +18,6 @@ function applyFilters(rooms, bookings) {
     });
 }
 
-function filterTable() {
-    const fromValue = parseInt(document.getElementById('fromToRange').value);
-    const allRooms = ["1.0", "2.0", "3.0", "4.0", "5.0", "6.0", "7.0", "8.0", "9.0"];
-
-    if (fromValue === -1 || isNaN(fromValue)) {
-        // Show all rooms with bookings (no filter applied yet)
-        renderBookingTable(allRooms, bookings);
-    } else {
-        const filteredRooms = applyFilters(allRooms, bookings);
-        renderBookingTable(filteredRooms, bookings);
-    }
-}
-renderBookingTable(["1.0", "2.0", "3.0", "4.0", "5.0", "6.0", "7.0", "8.0", "9.0"], bookings);
-filterTable(); // Apply filter after table is rendered
-
 // Filter Toggle & Reset From Hour
 let filterbutton = document.querySelector("button#expand-filter");
 filterbutton.addEventListener("click", () => {
@@ -46,17 +33,29 @@ filterbutton.addEventListener("click", () => {
     }
 });
 
-function updateLengthDisplay(value) {
+export function updateLengthDisplay(value) {
     document.getElementById('lengthDisplay').innerText = value + " Hour" + (value > 1 ? "s" : "");
-    filterTable();
+    renderBookingTable();
 }
 
-function updateFromToDisplay(value) {
+export function updateFromToDisplay(value) {
     const display = document.getElementById('fromToDisplay');
     if (parseInt(value) === -1) {
         display.innerText = "Select Time";
         return;
     }
     display.innerText = value + ":00";
-    filterTable();
+    renderBookingTable();
+}
+
+export function initFilters() {
+    updateLengthDisplay(document.getElementById('lengthRange').value);
+    updateFromToDisplay(document.getElementById('fromToRange').value);
+    
+    document.querySelector("#fromToRange").addEventListener("input", (e) => {
+        updateFromToDisplay(e.target.value);
+    });
+    document.querySelector("#lengthRange").addEventListener("input", (e) => {
+        updateLengthDisplay(e.target.value);
+    })
 }

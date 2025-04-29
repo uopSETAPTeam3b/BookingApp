@@ -7,12 +7,12 @@
 <section id="filter" class="hidden">
     <div>
         <label for="lengthRange">Length (Hours):</label>
-        <input type="range" id="lengthRange" name="lengthRange" min="1" max="24" value="1" oninput="updateLengthDisplay(this.value)">
+        <input type="range" id="lengthRange" name="lengthRange" min="1" max="24" value="1">
         <span id="lengthDisplay">1 Hour</span>
     </div>
     <div>
         <label for="fromToRange">From (Hour of Day):</label>
-        <input type="range" id="fromToRange" name="fromToRange" min="0" max="23" value="12" oninput="updateFromToDisplay(this.value)">
+        <input type="range" id="fromToRange" name="fromToRange" min="0" max="23" value="-1">
         <span id="fromToDisplay">12:00</span>
     </div>
 </section>
@@ -23,5 +23,5 @@
 
 <table id="bookings-table"></table>
 
-<script src="book.js"></script>
-<script src="filter.js"></script>
+<script src="book.js" type="module"></script>
+<script src="filter.js" type="module"></script>
