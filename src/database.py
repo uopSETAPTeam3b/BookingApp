@@ -1,6 +1,7 @@
 import os
-import sqlite3
+from typing import Optional
 import secrets
+import aiosqlite
 from pydantic.dataclasses import dataclass
 
 
@@ -22,58 +23,225 @@ class Booking:
     room: Room
     time: int
 
+class DB:
+    def __init__(self):
+        self.db = None
+
+    async def __aenter__(self) -> "DatabaseManager":
+        self.db = await DatabaseManager.create()
+        return self.db
+
+    async def __aexit__(self, exc_type, exc_val, traceback):
+        if self.db:
+            await self.db.close()
 
 class DatabaseManager:
     """Database class the has functions mapped to identified SQL queries that are necersarry"""
 
+    file: str = "database.db"
+    create_script: str = "src/create.sql"
+
     # sql queries should be put into these functions to interact with the database
-    def __init__(
-        self, file: str = "database.db", create_script: str = "src/create.sql"
-    ):
-        db_exists = os.path.exists("database.db")
-        self.db = sqlite3.connect("database.db")
-        self.cur = self.db.cursor()
+    def __init__(self, file: str | None = None, create: str | None = None):
+        DatabaseManager.file = file or DatabaseManager.file
+        DatabaseManager.create_script = create or DatabaseManager.create_script
+        self.conn: aiosqlite.Connection | None = None
+
+    @classmethod
+    async def create(cls) -> "DatabaseManager":
+        self = cls()
+
+        db_exists = os.path.exists(self.file)
+
+        self.conn = await aiosqlite.connect(self.file)
 
         if not db_exists:
-            with open(create_script, "r") as f:
-                self.cur.executescript(f.read())
+            with open(self.create_script, "r") as f:
+                await self.conn.executescript(f.read())
 
-        self.db.commit()
+        await self.conn.commit()
+        return self
 
-    def get_email(self, user_id: int) -> str:
+    async def get_email(self, user_id: int) -> str:
         """ Gets a email from a user """
         # takes a user_id and returns the email of the user
         # SELECT email FROM User WHERE user_id = ?;
-        email = ""
-        return email
 
-    def create_token(self, user: User) -> str:
+        async with self.conn.execute("SELECT email FROM User WHERE user_id = ?", (user_id,)) as cursor:
+            result = await self.conn.fetchone()
+
+        if result:
+            return result[0]  # not result because it is a tuple
+        return "Error. User not found"
+
+    async def create_token(self, user: User) -> str:
         """ Creates and returns a token new for a user """
         # query MUST insert token into the database that the user will use for the session
         # INSERT INTO Authentication (token, user_id, timestamp) VALUES (?, ?, datetime('now'));
         token = str(secrets.token_hex(32))
         return token
-    
-    def verify_token(self, token: str) -> bool:
+
+    async def verify_token(self, token: str) -> bool:
         """ Verifies the token """
         user = self.get_user(token)
         if not user:
             return False
         return True
 
-    def find_booking(self, room_id: int, time: int) -> Booking:
+    async def create_user(self, username: str, password: str, email: str) -> Optional[str]:
+        """Create a new user and return authentication token"""
+        try:
+            async with self.conn.execute(
+                """
+                INSERT INTO User (username, password, email, role) 
+                VALUES (?, ?, ?, 'user')
+                """,
+                (username, password, email)
+            ) as cur:
+                user_id = cur.lastrowid
+                await self.conn.commit()
+                return await self.create_token(user_id)
+        except aiosqlite.IntegrityError:
+            return None
+
+    async def get_user(self, token: str) -> Optional[User]:
+        """Get user from authentication token"""
+        async with self.conn.execute(
+            """
+            SELECT u.user_id, u.username, u.email, u.role 
+            FROM User u 
+            JOIN Authentication a ON u.user_id = a.user_id 
+            WHERE a.token = ?
+            """,
+            (token,)
+        ) as cur:
+            if result := cur.fetchone():
+                return User(
+                    # id=result["user_id"],
+                    username=result[1],
+                    email=result[2],
+                    # role=result["role"]
+                )
+        return None
+
+    async def get_user_from_booking(self, booking_id: int) -> Optional[User]:
+        """Get user associated with a booking"""
+        async with self.conn.execute(
+            """
+            SELECT u.user_id, u.username, u.email, u.role
+            FROM User u 
+            JOIN User_Booking ub ON u.user_id = ub.user_id 
+            WHERE ub.booking_id = ?
+            """,
+            (booking_id,)
+        ) as cur:
+            if result := cur.fetchone():
+                return User(
+                    # id=result["user_id"],
+                    username=result["username"],
+                    email=result["email"],
+                    # role=result["role"]
+                )
+        return None
+
+    async def get_user_from_username(self, username: str) -> Optional[User]:
+        """Get user by username"""
+        async with self.conn.execute(
+            "SELECT user_id, username, email, role FROM User WHERE username = ?",
+            (username,)
+        ) as cur:
+            if result := await cur.fetchone():
+                return User(
+                    # id=result["user_id"],
+                    username=result[1],
+                    email=result[2],
+                    # role=result["role"]
+                )
+        return None
+
+    async def get_password(self, user: User) -> Optional[str]:
+        """Get hashed password for a user"""
+        async with self.conn.execute(
+            "SELECT password FROM User WHERE username = ?",
+            (user.username,)
+        ) as cur:
+            if result := await cur.fetchone():
+                return result[0]
+        return None
+
+    async def get_user_email(self, user_id: int) -> Optional[str]:
+        """Get email from user_id"""
+        async with self.conn.execute(
+            "SELECT email FROM User WHERE user_id = ?",
+            (user_id,)
+        ) as cur:
+            if result := cur.fetchone():
+                return result["email"]
+        return None
+
+    async def find_booking(self, room_id: int, time: str) -> Booking:
         """ Returns a booking if found at a room and time """
-        # query must check DB for booking at room and time
-        #SELECT * FROM Booking WHERE room_id = ? AND start_time <= time;
-        return Booking(0, User("", ""), Room(0), 0)
+        # Query to find a booking in the Booking table for the specified room and time
+        async with self.conn.execute(
+            '''
+            SELECT b.booking_id, b.building_id, b.room_id, b.start_time, b.duration, b.access_code, ub.user_id
+            FROM Booking b
+            JOIN User_Booking ub ON b.booking_id = ub.booking_id
+            WHERE b.room_id = ? AND b.start_time <= ?
+            ''',
+            (room_id, time)
+        ) as cur:
 
-    def get_booking(self, booking_id: int) -> Booking:
-        """ Returns a booking from a booking id """
-        # query must get the booking of booking_id
-        #SELECT * FROM Booking WHERE booking_id = ?;
-        return Booking(0, User("", ""), Room(0), 0)
+            result = cur.fetchone()
 
-    def add_booking(self, room_id: int, time: int, token: str) -> Booking:
+            if result:
+                booking_id = result[0]  # booking_id
+                building_id = result[1]  # building_id
+                room_id = result[2]      # room_id
+                start_time = result[3]   # start_time
+                duration = result[4]      # duration
+                access_code = result[5]   # access_code
+                user_id = result[6]       # user_id
+
+                # Retrieve User object from user_id
+                user = self.get_user_from_booking(user_id)
+
+                return Booking(booking_id, user, Room(room_id), start_time)
+            return "Booking doesn't exist."
+
+    async def get_booking(self, booking_id: int) -> Booking:
+        """ Returns a booking from a booking_id """
+        # Query to get the booking details from the Booking table
+        async with self.conn.execute(
+            '''
+            SELECT b.booking_id, b.building_id, b.room_id, b.start_time, b.duration, b.access_code, ub.user_id
+            FROM Booking b
+            JOIN User_Booking ub ON b.booking_id = ub.booking_id
+            WHERE b.booking_id = ?
+            ''',
+            (booking_id,)
+        ) as cur:
+
+            result = cur.fetchone()
+
+            if result:  # Check if a booking was found
+                booking_id = result[0]  # booking_id
+                building_id = result[1]  # building_id
+                room_id = result[2]      # room_id
+                start_time = result[3]   # start_time
+                duration = result[4]     # duration
+                access_code = result[5]  # access_code
+                user_id = result[6]      # user_id
+
+                # Retrieve User object from user_id
+                user = self.get_user_from_booking(user_id)
+
+                room = self.get_room(room_id)
+
+                return Booking(booking_id, user, room, start_time)
+            return "Booking doesn't exist."
+
+    async def add_booking(self, room_id: int, time: int, token: str) -> Booking:
         """ Adds a booking to the database  """
         # query must insert booking into database
         #INSERT INTO Booking (building_id, room_id, start_time, duration, access_code) VALUES (?, ?, ?, ?, ?);
@@ -84,67 +252,97 @@ class DatabaseManager:
             return Booking(0, User("", ""), Room(0), 0)
         return Booking(0, User("", ""), Room(0), 0)
 
-    def remove_booking(self, booking_id: int) -> Booking:
-        """ Removes a booking from the database from booking id """
-        # delete booking from database
-        #DELETE FROM Booking WHERE booking_id = ?;
-        #DELETE FROM User_Booking WHERE booking_id = ?;
+    async def remove_booking(self, booking_id: int) -> bool:
+        """ Removes a booking from the database using the booking_id """
+
         booking = self.get_booking(booking_id)
-        return booking
 
-    def get_all_bookings(self) -> list[Booking]:
+        if isinstance(booking, Booking):  # check if booking exists
+
+            await self.conn.execute("DELETE FROM User_Booking WHERE booking_id = ?", (booking_id,))  # Delete from User_Booking table
+
+            await self.conn.execute("DELETE FROM Booking WHERE booking_id = ?", (booking_id,))  # Delete from Booking table
+
+            await self.conn.commit()  # commit to db
+
+            return True  # successful removal
+        return False  # booking didn't exist
+
+
+    async def get_all_bookings(self) -> list[Booking]:
         """ Returns a list of all future/current bookings """
-        # query must get all future/current bookings
-        #SELECT * FROM Booking WHERE datetime(start_time, '+' || duration || ' minutes') > datetime('now')ORDER BY start_time;
+        # Query to get all future/current bookings
+        async with self.conn.execute(
+            '''
+            SELECT b.booking_id, b.building_id, b.room_id, b.start_time, b.duration, b.access_code, ub.user_id
+            FROM Booking b
+            JOIN User_Booking ub ON b.booking_id = ub.booking_id
+            WHERE datetime(b.start_time, '+' || b.duration || ' minutes') > datetime('now')
+            ORDER BY b.start_time;
+            '''
+        ) as cur:
 
-        return []
+            results = cur.fetchall()  # Fetch all matching bookings
+            bookings = []  # List to hold Booking objects
 
-    def get_room(self, room_id: int) -> Room:
+            for result in results:
+                booking_id = result[0]  # booking_id
+                building_id = result[1]  # building_id
+                room_id = result[2]      # room_id
+                start_time = result[3]   # start_time
+                duration = result[4]      # duration
+                access_code = result[5]   # access_code
+                user_id = result[6]       # user_id
+
+                # Retrieve User object from user_id
+                user = self.get_user_from_booking(user_id)
+
+                # Create Room object
+                room = Room(id=room_id)
+
+                # Create Booking object and append to the list
+                bookings.append(Booking(id=booking_id, user=user, room=room, time=start_time))
+
+            return bookings  # Return the list of Booking objects
+
+
+    async def get_room(self, room_id: int) -> Room:
         """ Returns a room from a room id """
-        # query must get a room from room_id
-        #SELECT * FROM Room WHERE room_id = ?;
-        return Room(0)
+        # Query to get a room from the Room table
+        async with self.conn.execute(
+            '''
+            SELECT room_id FROM Room WHERE room_id = ?;
+            ''',
+            (room_id,)
+        ) as cur:
 
-    def get_room_facilities(self, room_id: int) -> list[str]:
+            result = await cur.fetchone() 
+
+            if result: 
+                return Room(id=result[0]) 
+            return "Room not found." 
+
+    async def get_room_facilities(self, room_id: int) -> list[str]:
         """ Returns a list of facilities for a room """
-        # query must get a list of facilities for a room
-        #SELECT r.*, GROUP_CONCAT(f.facility_id) AS facility_ids FROM Room r LEFT JOIN Room_Facility rf ON r.room_id = rf.room_id LEFT JOIN Facility f ON rf.facility_id = f.facility_id WHERE r.room_id = ? GROUP BY r.room_id;
-        return []
-    def get_user(self, token: str) -> User:
-        """ Returns a user from a token """
-        # query must get a user from token
-        #SELECT u.* FROM User u JOIN Authentication a ON u.user_id = a.user_id WHERE a.token = ?;
-        return User("", "")
+        # Query to get a list of facilities for the specified room
 
-    def get_user_from_booking(self, booking_id: int) -> User:
-        """ Returns a user from a booking id """
-        # query must get a user from booking_id
-        #SELECT u.* FROM User u JOIN User_Booking ub ON u.user_id = ub.user_id WHERE ub.booking_id = ?;
-        return User("", "")
-    
-    def get_user_from_username(self, username: str)-> User:
-        """ returns user from username """
-        # query must get the users details
-        #SELECT * FROM User WHERE username = ?;
-        email = ""
-        return User(username, email)
-    
-    def get_password(self, username: str) -> str:
-        """ Returns a password for a user """
-        # query must get the users password
-        #SELECT password FROM User WHERE username = ?;
-        password = ""
-        return password
-    
-    def create_user(self, username: str, password: str) -> str:
-        """ Create user in db """
-        #INSERT INTO User (username, password, email, role) VALUES (?, ?, ?, 'user');
-        user = User("", "")
-        token = self.create_token(user)
-        return token
+        #set below f.facility_id to f.facility_name when the sql file is changed
+        async with self.conn.execute(
+            '''
+            SELECT f.facility_id 
+            FROM Facility f
+            LEFT JOIN Room_Facility rf ON f.facility_id = rf.facility_id
+            WHERE rf.room_id = ?;
+            ''',
+            (room_id,)
+        ) as cur:
+        
+            results = await cur.fetchall()  # Fetch all matching facilities
+            facilities = [result[0] for result in results]  # Extract facility_ids into a list
 
-    def get_user_email(self, user: User) -> str:
-        """ Returns a user email from a user object """
-        # query must get a user email from user object
-        #SELECT email FROM User WHERE user_id = ?;
-        return ""
+            return facilities  # currently this returns ID's. Need to return actual facilities when necessary change is made in the sql file.
+    
+    async def close(self):  # for testing purposes
+        await self.conn.commit()
+        await self.conn.close()
+        
