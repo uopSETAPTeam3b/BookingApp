@@ -22,23 +22,9 @@ pre.addEventListener("click", () => {
     updateBookingTable()
 })
 
-async function updateBookingTable() {
+function renderBookingTable(rooms, bookings) {
     let table = document.getElementById("bookings-table")
 
-    let date = document.querySelector("#date");
-    
-    let response = await fetch("/booking/get_rooms", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-            date: new Date(date.value).toString()
-        })
-    })
-
-    bookings = await response.json()
-    // wait till after request to clear table to prevent flicker
     table.innerHTML = '';
 
     // Place the time headings onto the table
@@ -48,13 +34,14 @@ async function updateBookingTable() {
     header.appendChild(room_header)
     for (let i = 0; i < 24; i++) {
         let time = document.createElement("th")
-        time.textContent = i.toString()
+        time.textContent = `${i.toString()}:00`
         header.appendChild(time)
     }
     table.appendChild(header)
 
+
     // Place the rooms and the checkboxes in the table
-    for (let room of ["1.0", "2.0", "3.0", "4.0", "5.0", "6.0", "7.0", "8.0", "9.0"]) {
+    for (let room of rooms) {
         let row = document.createElement("tr")
         room_name = document.createElement("th")
         room_name.textContent = room
@@ -73,6 +60,31 @@ async function updateBookingTable() {
         table.appendChild(row)
     }
 
+    // mark booked rooms
+    for (let booking of bookings) {
+        checkbox = document.querySelector(`input[type="checkbox"][time="${booking.time}"][room="${booking.room}"]`)
+        checkbox.disabled = true
+        checkbox.checked = true
+    }
+
+}
+
+async function updateBookingTable() {
+
+    let date = document.querySelector("#date");
+
+    let response = await fetch("/booking/get_rooms", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            date: new Date(date.value).toString()
+        })
+    })
+
+    bookings = await response.json()
+
     // Get bookings for current date
     response = await fetch("/booking/get_bookings_for_date", {
         method: "POST",
@@ -86,19 +98,18 @@ async function updateBookingTable() {
 
     bookings = await response.json()
     bookings = [
-        {time: 11, room:"3.0"},
-        {time: 12, room: "3.0"},
-        {time: 13, room: "3.0"},
-        {time: 14, room: "3.0"}
+        { time: 11, room: "3.0" },
+        { time: 12, room: "3.0" },
+        { time: 13, room: "3.0" },
+        { time: 14, room: "3.0" }
     ]
 
-
-    // mark booked rooms
-    for (let booking of bookings) {
-        checkbox = document.querySelector(`input[type="checkbox"][time="${booking.time}"][room="${booking.room}"]`)
-        checkbox.disabled = true
-        checkbox.checked = true
+    function applyFilters(rooms, bookings) {
+        return rooms;
     }
+    let rooms = applyFilters(["1.0", "2.0", "3.0", "4.0", "5.0", "6.0", "7.0", "8.0", "9.0"], bookings)
+
+    renderBookingTable(rooms, bookings);
 }
 
 // Draw the table for the initial date
