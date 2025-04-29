@@ -7,7 +7,8 @@ from app import app
 
 client = TestClient(app)
 
-os.remove("database_test.db")
+if os.path.exists("database_test.db"):
+    os.remove("database_test.db")
 
 token = None
 

@@ -14,7 +14,10 @@ from notification import NotificationManager
 app = FastAPI()
 
 if os.environ.get("PYTEST_VERSION") is not None:
+    STATIC = "../static"
     DatabaseManager("database_test.db")
+else:
+    STATIC = "static"
 
 notif = NotificationManager()
 # app.include_router(notif.router)
@@ -26,7 +29,6 @@ app.include_router(booking.router)
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
-STATIC = "static"
 TEMPLATE = "template"
 print(os.path.join(BASE_DIR, TEMPLATE))
 templates = Jinja2Templates(os.path.join(BASE_DIR, TEMPLATE))
