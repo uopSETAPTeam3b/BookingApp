@@ -1,0 +1,57 @@
+=<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Uni Library Booking System - Login & Sign Up</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="text-white">
+
+    <section class="overlay flex flex-col min-h-screen">
+        
+        <header class="p-6">
+            <img src="Logo.png" alt="Uni Library Logo" class="h-10">
+        </header>
+
+        <main class="flex-grow flex items-center justify-center px-4">
+            <article class="form-container max-w-md w-full p-8 rounded-lg">
+
+                <section id="login-form">
+                    <h1 class="text-3xl font-bold mb-6">Sign In</h1>
+                    <fieldset class="space-y-4">
+                        <input type="email" placeholder="University Email" class="w-full p-3 bg-gray-800 rounded text-white focus:outline-none focus:ring-2 focus:ring-blue-600">
+                        <input type="password" placeholder="Password" class="w-full p-3 bg-gray-800 rounded text-white focus:outline-none focus:ring-2 focus:ring-blue-600">
+                        <button type="button" class="w-full bg-blue-600 hover:bg-blue-700 text-white p-3 rounded font-semibold" onclick="signIn()">Sign In</button>
+                    </fieldset>
+                    <section class="flex justify-between items-center mt-4 text-sm text-gray-400">
+                        <label><input type="checkbox" class="mr-2">Remember me</label>
+                        <a href="#" class="hover:underline">Forgot Password?</a>
+                    </section>
+                    <p class="mt-8 text-gray-400">
+                        New to Uni Library? <a href="#" class="text-white hover:underline" onclick="showSignUp()">Sign up now</a>.
+                    </p>
+                </section>
+
+                <section id="signup-form" class="hidden">
+                    <h1 class="text-3xl font-bold mb-6">Sign Up</h1>
+                    <fieldset class="space-y-4">
+                        <input type="text" placeholder="Full Name" class="w-full p-3 bg-gray-800 rounded text-white focus:outline-none focus:ring-2 focus:ring-blue-600">
+                        <input type="email" placeholder="University Email" class="w-full p-3 bg-gray-800 rounded text-white focus:outline-none focus:ring-2 focus:ring-blue-600">
+                        <input type="password" placeholder="Password" class="w-full p-3 bg-gray-800 rounded text-white focus:outline-none focus:ring-2 focus:ring-blue-600">
+                        <button type="button" class="w-full bg-blue-600 hover:bg-blue-700 text-white p-3 rounded font-semibold" onclick="signUp()">Sign Up</button>
+                    </fieldset>
+                    <p class="mt-8 text-gray-400">
+                        Already have an account? <a href="#" class="text-white hover:underline" onclick="showLogin()">Sign in now</a>.
+                    </p>
+                </section>
+
+            </article>
+        </main>
+
+    </section>
+
+    <script src="script.js"></script>
+</body>
+</html>

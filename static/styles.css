@@ -1,0 +1,26 @@
+body {
+    background-image: url(Background.png);
+    background-size: 150%;
+    background-position: center;
+    background-repeat: no-repeat;
+    min-height: 100vh;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    height: 100vh;
+    overflow: hidden;
+    margin: 0;
+}
+
+.overlay {
+    background: rgba(0, 0, 0, 0.6);
+    position: absolute;
+    min-height: 100vh;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.form-container {
+    background: rgba(0, 0, 0, 0.85);
+}
+
