@@ -4,41 +4,45 @@ function onload() {
 }
 
 async function loginClick(){
-    console.log("Login button clicked");
     const username = document.getElementById("username").value;
     const password = document.getElementById("password").value;
     if (!confirmCredentials(username, password)){
         alert("Invalid username or password");
         return;
     }
-    console.log("Username: " + username);
     let loginStatus = verifyUser(username, password);
     if (loginStatus) {
         console.log("Login successful");
+        setTimeout(() => {
+            window.location.href = "/booking";
+        }, 1500);
     }
 
 }
-function verifyUser(username, password){
-    console.log("Verifying user...");
-    fetch('/account/login', {
+function verifyUser(username, password) {
+    return fetch('/account/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({username: username, password: password})
+        body: JSON.stringify({ username, password })
     })
     .then(response => response.json())
     .then(data => {
         if (data.token) {
-            console.log("Login successful, token:", data.token);
-            // Store the token securely (e.g., localStorage or cookies)
+            localStorage.setItem("token", data.token);
+            console.log("Token saved:", data.token);
+            document.getElementById("loading-spinner").style.display = "block";
+            return true;
         } else {
-            console.error("Login failed:", data.message);
-            alert(data.message);  // Display the error message to the user
+            alert(data.message);
+            return false;
         }
     })
-    const token = data.token;
-    
-    localStorage.setItem("token", token);
-};
+    .catch(err => {
+        console.error("Login error:", err);
+        return false;
+    });
+}
+
 
 function confirmCredentials(username, password){
     return true;

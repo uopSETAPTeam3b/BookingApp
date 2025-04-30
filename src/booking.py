@@ -4,7 +4,7 @@ from pydantic.dataclasses import dataclass
 from api import API
 from database import Booking, DB, Room
 from notification import NotificationManager
-
+from fastapi.responses import JSONResponse
 
 class BookingManager(API):
     prefix = "/booking"
@@ -84,16 +84,16 @@ class BookingManager(API):
 
     async def get_bookings(self, bookings: GetBookings) -> list[Booking]:
         """ Returns a list of active bookings for this user """
+        
         async with DB() as db:
             if not await db.verify_token(bookings.token):
+                print("User not found")
                 raise HTTPException(status_code=404, detail="User not found")
-            all_bookings = await db.get_all_bookings()
-            user = await db.get_user(bookings.token)
-            user_bookings = []
-            for booking in all_bookings:
-                if booking.user == user:
-                    user_bookings.append(booking)
-            return user_bookings
+            all_bookings = await db.get_bookings_by_token(bookings.token)
+            if not all_bookings:
+                print("No bookings found")
+                raise HTTPException(status_code=404, detail="No bookings found")
+            return JSONResponse(content={"bookings": all_bookings}, status_code=200)
 
     @dataclass
     class GetBookingsForDate:

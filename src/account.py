@@ -33,8 +33,8 @@ class AccountManager(API):
                 return ""
             print(f"User found: {user.username}")
             loginStatus = await self.verifyPassword(login.password, password)
-            if  loginStatus !=  False:
-                token = "1111111111"
+            if  loginStatus:
+                token = await db.create_token(user)
                 #self.reset_failed_attempts(user.username)
                 return JSONResponse(content={"token": token}, status_code=200)
             # If the user is not found or the password is incorrect, record the failed attempt

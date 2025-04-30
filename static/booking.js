@@ -1,44 +1,59 @@
 async function onload() {
     const token = localStorage.getItem("token");
-    //const response = await fetch("/api/booking/get_user_bookings");
-    const list = document.getElementById("bookingList");
-    list.innerHTML = ""; 
-    bookings = [
-        {
-          id: 1,
-          user: { username: "alice", email: "alice@example.com" },
-          room: { id: 101 },
-          time: 1714380000
-        },
-        {
-          id: 2,
-          user: { username: "bob", email: "bob@example.com" },
-          room: { id: 102 },
-          time: 1714466400
-        }
-      ];
-    //if (!token) {
-    //    list.innerHTML = "<li>You must be logged in to view bookings.</li>";
-    //    return;
-    //}
-    //if (!response.ok) throw new Error("Failed to fetch bookings");
-    //const bookings = await response.json();
-    if (bookings.length === 0) {
-        list.innerHTML = "<li>No bookings found.</li>";
+    if (!token) {
+        alert("No token found. Please log in.");
+        window.location.href = "/Auth_Page";  // Redirect to login page
         return;
     }
-    displayBookings(bookings);
+    fetchBookings(token);  // Fetch bookings using the token
 
 }
+async function fetchBookings(token) {
+  try {
+      const response = await fetch('/booking/get_bookings', {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ token: token })  // Send token in the request body
+      });
+
+      if (response.ok) {
+          const data = await response.json();  // Parse the JSON response
+
+          // Call a function to display the bookings
+          displayBookings(data.bookings);  // `data.bookings` contains the list of bookings
+      } else {
+          console.error("Error fetching bookings:", response.statusText);
+          alert("Error fetching bookings: " + response.statusText);
+      }
+  } catch (error) {
+      console.error("Network error:", error);
+      alert("Network error: " + error);
+  }
+}
+
+// Function to display the bookings on the webpage
 function displayBookings(bookings) {
-    const list = document.getElementById("bookingList");
-    list.innerHTML = ""; 
+  const bookingsList = document.getElementById('bookings-list');
+  
+  // Clear the list before adding new bookings
+  bookingsList.innerHTML = "";
 
-    bookings.forEach(booking => {
-        const li = document.createElement("li");
-        const date = new Date(booking.time * 1000); // assuming `time` is UNIX timestamp in seconds
-        li.textContent = `Room ${booking.room.id} | ${date.toLocaleString()} | User: ${booking.user.username}`;
-        list.appendChild(li);
-    });
+  // Loop through each booking and display it
+  bookings.forEach(booking => {
+      const listItem = document.createElement('li');
+      listItem.classList.add('booking-item');
+      listItem.innerHTML = `
+          <strong>Booking ID:</strong> ${booking.booking_id} <br>
+          <strong>Building:</strong> ${booking.building_name} <br>
+          <strong>Room Type:</strong> ${booking.room_type} <br>
+          <strong>Start Time:</strong> ${booking.start_time} <br>
+          <strong>Duration:</strong> ${booking.duration} <br>
+          <strong>Access Code:</strong> ${booking.access_code} <br>
+      `;
+      bookingsList.appendChild(listItem);
+  });
 }
+
 document.addEventListener('DOMContentLoaded', onload);

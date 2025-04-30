@@ -1,5 +1,7 @@
 import os
 from typing import Optional
+from datetime import datetime
+import time
 import secrets
 import aiosqlite
 from pydantic.dataclasses import dataclass
@@ -75,12 +77,36 @@ class DatabaseManager:
         return "Error. User not found"
 
     async def create_token(self, user: User) -> str:
-        """ Creates and returns a token new for a user """
-        # query MUST insert token into the database that the user will use for the session
-        # INSERT INTO Authentication (token, user_id, timestamp) VALUES (?, ?, datetime('now'));
-        token = str(secrets.token_hex(32))
-        return token
+        """Generate and store an authentication token for the given username."""
+        try:
+            async with self.conn.execute(
+                "SELECT user_id FROM User WHERE username = ?", (user.username,)
+            ) as cursor:
+                row = await cursor.fetchone()
+                if not row:
+                    return None  # Username not found
+                user_id = row[0]
 
+            token = str(secrets.token_hex(32))
+            timestamp = int(time.time() * 1000) 
+
+            await self.conn.execute(
+                """
+                INSERT INTO Authentication (token, user_id, timestamp)
+                VALUES (?, ?, ?)
+                ON CONFLICT(user_id) DO UPDATE SET
+                    token = excluded.token,
+                    timestamp = excluded.timestamp
+                """,
+                (token, user_id, timestamp)
+            )
+            await self.conn.commit()
+            return token
+
+        except Exception as e:
+            print("Token creation error:", e)
+            return None
+            """ Creates and returns a token new for a user """
     async def verify_token(self, token: str) -> bool:
         """ Verifies the token """
         user = self.get_user(token)
@@ -305,6 +331,67 @@ class DatabaseManager:
 
             return bookings  # Return the list of Booking objects
 
+    async def get_bookings_by_token(self, token: str) -> list[Booking]:
+        """Returns all current/future bookings for a user identified by their token, including building info"""
+        # Get user_id from token
+        async with self.conn.execute(
+            "SELECT user_id FROM Authentication WHERE token = ?", (token,)
+        ) as cur:
+            result = await cur.fetchone()
+            print(result)
+            if result is None:
+                return []  # Invalid token or not found
+            user_id = result[0]
+
+        async with self.conn.execute(
+            '''
+            SELECT b.booking_id, b.building_id, b.room_id, b.start_time, b.duration, b.access_code, 
+                   bl.building_name, bl.address_1, bl.address_2, bl.opening_time, bl.closing_time
+            FROM Booking b
+            JOIN User_Booking ub ON b.booking_id = ub.booking_id
+            JOIN Building bl ON b.building_id = bl.building_id
+            WHERE ub.user_id = ?
+              AND datetime(b.start_time, '+' || b.duration || ' minutes') > datetime('now')
+            ORDER BY b.start_time;
+            ''',
+            (user_id,)
+        ) as cur:
+            results = await cur.fetchall()
+            bookings = []
+
+            for result in results:
+                booking_id = result[0]
+                building_id = result[1]
+                room_id = result[2]
+                start_time = result[3]
+                duration = result[4]
+                access_code = result[5]
+                building_name = result[6]
+                address_1 = result[7]
+                address_2 = result[8]
+                opening_time = result[9]
+                closing_time = result[10]
+
+                user = self.get_user_from_booking(user_id)  # You may need to `await` this if it's async
+                room = Room(id=room_id)
+                building = Building(
+                    id=building_id,
+                    name=building_name,
+                    address_1=address_1,
+                    address_2=address_2,
+                    opening_time=opening_time,
+                    closing_time=closing_time
+                )
+
+                bookings.append(Booking(
+                    id=booking_id,
+                    user=user,
+                    room=room,
+                    time=start_time,
+                    building=building
+                ))
+
+            return bookings
 
     async def get_room(self, room_id: int) -> Room:
         """ Returns a room from a room id """
