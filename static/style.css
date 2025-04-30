@@ -6,6 +6,7 @@
   --text-color: #333333;
   --input-color: #F3F0FF;
   --background-color: rgba(255, 255, 255, 0.95);
+  --background-image: url(../static/lightback.png);
 }
 
 .darkmode {
@@ -14,6 +15,7 @@
   --text-color: #ffffff;
   --input-color: #101425;
   --background-color: rgba(16, 20, 37, 0.95);
+  --background-image: url(../static/darkback.png);
 }
 
 .darkmode .wrapper h1,
@@ -35,7 +37,7 @@ html {
 
 body {
   min-height: 100vh;
-  background-image: url(../static/background.png);
+  background-image: var(--background-image);
   background-size: cover;
   background-position: center;
   overflow: hidden;
