@@ -14,7 +14,7 @@ function onload() {
         window.location.href = "/booking";
     });
     loginButton.addEventListener("click", () => {
-        window.location.href = "/Auth_Page";
+        window.location.href = "/login";
     });
 }
 document.addEventListener('DOMContentLoaded', onload);
