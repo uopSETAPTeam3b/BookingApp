@@ -19,61 +19,7 @@
     <a href="login.html" class="button">Login</a>
     <a href="signup.html" class="button">Sign Up</a>
   </div>
-  <script>
-    function addBookVectors() {
-      const container = document.querySelector('.book-vectors');
-      container.innerHTML = ''; 
-      const numVectors = 30; 
-
-      for (let i = 0; i < numVectors; i++) {
-        const vector = document.createElement('div');
-        vector.innerHTML = svg = ` <svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="var(--accent-color)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>
-                                   </svg>`;
-        vector.className = 'book-vector';
-        vector.style.position = 'absolute';
-        vector.style.zIndex = '1';
-        vector.style.opacity = '0.3';
-        vector.style.transform = `rotate(${Math.random() * 360}deg)`;
-        vector.style.pointerEvents = 'none'; // Prevent vectors from intercepting clicks
-
-        // Random positioning
-        const maxX = window.innerWidth - 50;
-        const maxY = window.innerHeight - 50;
-        vector.style.left = `${Math.random() * maxX}px`;
-        vector.style.top = `${Math.random() * maxY}px`;
-
-        container.appendChild(vector);
-      }
-    }
-
-    // Theme switcher functionality
-    const themeSwitch = document.getElementById('theme-switch');
-    if (themeSwitch) {
-      themeSwitch.addEventListener('click', (event) => {
-        event.stopPropagation(); // Prevent event from bubbling up
-        document.documentElement.classList.toggle('darkmode');
-        // Save theme preference
-        localStorage.setItem('theme', document.documentElement.classList.contains('darkmode') ? 'dark' : 'light');
-      });
-    }
-
-    // Load saved theme
-    if (localStorage.getItem('theme') === 'dark') {
-      document.documentElement.classList.add('darkmode');
-    }
-
-    // Run on page load
-    window.addEventListener('DOMContentLoaded', () => {
-      addBookVectors();
-      // Debug: Log button clickability
-      document.querySelectorAll('.button').forEach(button => {
-        button.addEventListener('click', () => console.log(`${button.textContent} button clicked`));
-      });
-    });
-    // Re-run on window resize to adjust positions
-    window.addEventListener('resize', addBookVectors);
-  </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'93846cb6dd617bab',t:'MTc0NTk4ODY5My4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
+  <script src="../static/welcome.js"></script>
+  <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'93846cb6dd617bab',t:'MTc0NTk4ODY5My4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
 </body>
 </html>
