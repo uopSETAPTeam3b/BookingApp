@@ -4,8 +4,8 @@ function onload() {
 }
 
 async function loginClick(){
-    const username = document.getElementById("username").value;
-    const password = document.getElementById("password").value;
+    const username = document.getElementById("username_input").value;
+    const password = document.getElementById("password_input").value;
     if (!confirmCredentials(username, password)){
         alert("Invalid username or password");
         return;
