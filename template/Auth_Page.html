@@ -17,9 +17,9 @@
             <section id="login-form">
                 <h1 class="text-3xl font-bold mb-6">Sign In</h1>
                 <fieldset class="space-y-4">
-                    <input type="email" placeholder="University Email" class="w-full p-3 bg-gray-800 rounded text-white focus:outline-none focus:ring-2 focus:ring-blue-600">
-                    <input type="password" placeholder="Password" class="w-full p-3 bg-gray-800 rounded text-white focus:outline-none focus:ring-2 focus:ring-blue-600">
-                    <button type="button" class="w-full bg-blue-600 hover:bg-blue-700 text-white p-3 rounded font-semibold" onclick="signIn()">Sign In</button>
+                    <input id="username" type="email" placeholder="University Email" class="w-full p-3 bg-gray-800 rounded text-white focus:outline-none focus:ring-2 focus:ring-blue-600">
+                    <input id="password" type="password" placeholder="Password" class="w-full p-3 bg-gray-800 rounded text-white focus:outline-none focus:ring-2 focus:ring-blue-600">
+                    <button type="button" class="w-full bg-blue-600 hover:bg-blue-700 text-white p-3 rounded font-semibold" id="loginBtn">Sign In</button>
                 </fieldset>
                 <section class="flex justify-between items-center mt-4 text-sm text-gray-400">
                     <label><input type="checkbox" class="mr-2">Remember me</label>
@@ -48,4 +48,4 @@
     </main>
 </section>
 
-<script src="script.js"></script>
+<script src="login.js"></script>

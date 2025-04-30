@@ -1,8 +1,10 @@
 from collections import defaultdict
+from fastapi.responses import JSONResponse
 from datetime import datetime
 from dataclasses import dataclass
 from api import API
 from database import User, DB
+import bcrypt
 
 class AccountManager(API):
     prefix = "/account"
@@ -20,18 +22,26 @@ class AccountManager(API):
         password: str
 
     async def login(self, login: Login) -> str:
+        print(f"Login attempt for {login.username}")
         # Needs to return either a token or a error message for the client (probably json)
         """ Returns the users token if login succeful"""
         async with DB() as db:
             user: User = await db.get_user_from_username(login.username)
-            user_password = await db.get_password(user)
-            if login.password == user_password:
-                self.reset_failed_attempts(user.username)
-                return await db.create_token(user) #successful login
+            password = await db.get_password(user)
+            if user is None:
+                print(f"User not found: {user.username}")
+                return ""
+            print(f"User found: {user.username}")
+            loginStatus = await self.verifyPassword(login.password, password)
+            if  loginStatus !=  False:
+                token = "1111111111"
+                #self.reset_failed_attempts(user.username)
+                return JSONResponse(content={"token": token}, status_code=200)
+            # If the user is not found or the password is incorrect, record the failed attempt
             if self.get_failed_attempts(user.username) > 3:
-                return "" #error, lock out user or require email verify or pass reset
-            self.record_failed_attempt(login.username)
-            return "" #error need help ben pls
+                return JSONResponse(content={"message": "Too many failed attempts: Please try contact support"}, status_code=400) #error, lock out user or require email verify or pass reset
+            self.record_failed_attempt(user.username)
+            return JSONResponse(content={"message": "Invalid username or password"}, status_code=400) #error need help ben pls
 
     @dataclass
     class Logout:
@@ -68,3 +78,9 @@ class AccountManager(API):
     def reset_failed_attempts(self, username: str):
         """Reset the failed login attempt count after a successful login."""
         self.login_attempts[username] = {"count": 0, "last_attempt": None}
+
+    async def verifyPassword(self, password:str, hashed_password:str) -> bool:
+        """Verify the password for a user."""
+        async with DB() as db:
+            #user: User = await db.get_user_from_username(login.username)
+            return bcrypt.checkpw(password.encode('utf-8'), hashed_password.encode('utf-8'))
