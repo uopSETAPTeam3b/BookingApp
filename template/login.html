@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login</title>
   <link rel="stylesheet" href="../static/style.css">
-  <script type="text/javascript" src="../static/validation.js" defer></script>
 </head>
 <body>
   <button id="theme-switch">
@@ -30,11 +29,58 @@
       </div>
       <button type="submit">Login</button>
     </form>
-    <p>Already have an Account? <a href="signup.html">Signup</a></p>
+    <p><a href="#" id="forgot-password-link">Forgot Password?</a></p>
+    <p>Don't have an Account? <a href="signup.html">Signup</a></p>
   </div>
+
+  <!-- Forgot Password Modal -->
+  <div id="forgot-password-modal" class="modal">
+    <div class="modal-content">
+      <span class="close">×</span>
+      <h2>Reset Password</h2>
+      <div class="reset-options">
+        <button id="backup-code-option" class="option-btn active">Backup Code</button>
+        <button id="email-option" class="option-btn">Email</button>
+      </div>
+      
+      <!-- Backup Code Form -->
+      <form id="backup-code-form" class="reset-form active">
+        <div>
+          <label for="backup-email">
+            <span>@</span>
+          </label>
+          <input type="email" name="email" id="backup-email" placeholder="Email" required>
+        </div>
+        <div>
+          <label for="backup-code">
+            <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24"><path d="M320-240h320v-80H320v80Zm0-160h320v-80H320v80ZM240-80q-33 0-56.5-23.5T160-160v-640q0-33 23.5-56.5T240-880h480q33 0 56.5 23.5T800-800v640q0 33-23.5 56.5T720-80H240Zm0-80h480v-640H240v640Zm0 0v-640 640Z"/></svg>
+          </label>
+          <input type="text" name="code" id="backup-code" placeholder="Backup Code" required>
+        </div>
+        <button type="submit">Submit</button>
+      </form>
+
+      <!-- Form -->
+      <form id="email-form" class="reset-form">
+        <div>
+          <label for="first-name">
+            <span>N</span>
+          </label>
+          <input type="text" name="first-name" id="first-name" placeholder="First Name" required>
+        </div>
+        <div>
+          <label for="email">
+            <span>@</span>
+          </label>
+          <input type="email" name="email" id="email" placeholder="Email" required>
+        </div>
+        <button type="submit">Send Code</button>
+      </form>
+    </div>
+  </div>
+
   <script type="text/javascript" src="../static/validation.js" defer></script>
   <script type="text/javascript" src="../static/darkmode.js" defer></script>
+  <script type="text/javascript" src="../static/forpas.js" defer></script>>
 </body>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9383761b3e1f82a4',t:'MTc0NTk3ODU5Mi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'93843a25e8af7750',t:'MTc0NTk4NjYyMi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
