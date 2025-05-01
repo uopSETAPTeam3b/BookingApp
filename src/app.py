@@ -26,7 +26,7 @@ else:
 notif = NotificationManager()
 # app.include_router(notif.router)
 
-account = AccountManager()
+account = AccountManager(notif)
 app.include_router(account.router)
 booking = BookingManager(notif)
 app.include_router(booking.router)

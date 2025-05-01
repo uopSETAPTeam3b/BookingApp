@@ -4,13 +4,17 @@ from datetime import datetime
 from dataclasses import dataclass
 from api import API
 from database import User, DB
+from notification import NotificationManager
+from fastapi import BackgroundTasks
 import bcrypt
 
 class AccountManager(API):
     prefix = "/account"
 
-    def __init__(self):
+    def __init__(self, nm: NotificationManager):
         super().__init__()
+        self.nm = nm
+       
         self.router.add_api_route("/login", self.login, methods=["POST"])
         self.router.add_api_route("/logout", self.logout, methods=["POST"])
         self.router.add_api_route("/register", self.register, methods=["POST"])
@@ -73,17 +77,26 @@ class AccountManager(API):
     class Register:
         username: str
         password: str
+    
+    def hash_password(self, password: str) -> str:
+        salt = bcrypt.gensalt()
+        hashed = bcrypt.hashpw(password.encode('utf-8'), salt)
+        return hashed.decode('utf-8')  # store as string in DB
 
     # Needs to return either a token or an error message for the client (probably json)
-    async def register(self, register: Register) -> str:
+    async def register(self, register: Register, background_tasks:BackgroundTasks) -> str:
         """ creates user and returns token """
         async with DB() as db:
-            user = await db.get_user_from_username(register.username)
+            user = await db.get_user_from_username(register.username.lower())
             if user is None:
-                token = await db.create_user(register.username, register.password, "")
-                print(f"OMG the token is {token}")
-                return token or ""
-            return ""  # error
+                password = register.password
+                #print(password)
+                hashed_password = self.hash_password(password=password)
+                token = await db.create_user(register.username.lower(), hashed_password, register.username.lower())
+                new_user = await db.get_user_from_username(register.username.lower())
+                self.nm.account_created(user=new_user, background_tasks=background_tasks)
+                return JSONResponse(content={"token": token or ""}, status_code=200)
+            return JSONResponse(content={"message": "User already exists"}, status_code=400) # error
 
     def record_failed_attempt(self,username: str):
         """Record a failed login attempt for a user."""

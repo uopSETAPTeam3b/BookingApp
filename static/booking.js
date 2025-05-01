@@ -37,8 +37,12 @@ async function fetchBookings(token) {
           // Call a function to display the bookings
           displayBookings(data.bookings);  // `data.bookings` contains the list of bookings
       } else {
-          console.error("Error fetching bookings:", response.statusText);
-          alert("Error fetching bookings: " + response.statusText);
+        const bookingsList = document.getElementById('bookingList');
+        bookingsList.innerHTML = ""; // Clear existing list
+        const listItem = document.createElement('li');
+        listItem.innerHTML = "You have no upcoming bookings.";
+        bookingsList.appendChild(listItem);
+        return;
       }
   } catch (error) {
       console.error("Network error:", error);

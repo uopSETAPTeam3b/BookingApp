@@ -148,8 +148,9 @@ class DatabaseManager:
                 (username, password, email)
             ) as cur:
                 user_id = cur.lastrowid
+                user = await self.get_user_from_username(username)
                 await self.conn.commit()
-                return await self.create_token(user_id)
+                return await self.create_token(user)
         except aiosqlite.IntegrityError:
             return None
 
@@ -193,6 +194,8 @@ class DatabaseManager:
 
     async def get_user_from_username(self, username: str) -> Optional[User]:
         """Get user by username"""
+        username = username.lower()
+        print(username)
         async with self.conn.execute(
             "SELECT user_id, username, email, role FROM User WHERE username = ?",
             (username,)
@@ -206,6 +209,20 @@ class DatabaseManager:
                 )
         return None
 
+    async def get_user_from_email(self, email: str) -> Optional[User]:
+        """Get user by email"""
+        async with self.conn.execute(
+            "SELECT user_id, username, email, role FROM User WHERE email = ?",
+            (email,)
+        ) as cur:
+            if result := await cur.fetchone():
+                return User(
+                    # id=result["user_id"],
+                    username=result[1],
+                    email=result[2],
+                    # role=result["role"]
+                )
+        return None
     async def get_password(self, user: User) -> Optional[str]:
         """Get hashed password for a user"""
         async with self.conn.execute(

@@ -47,6 +47,23 @@ class NotificationManager:
         </html>"""
         background_tasks.add_task(self.send_email(db.get_user_email(booking.user), subject, body))
         return "Booking confirmation email sent."
+    
+    def account_created(self, user: User, background_tasks: BackgroundTasks) -> str:
+        """Sends confirmation email when a user account is created."""
+        subject = "Welcome to Our Booking Platform!"
+        body = f"""<html>
+            <body>
+                <h2>Welcome, {user.username}!</h2>
+                <p>Your account has been successfully created. We're excited to have you on board.</p>
+                <p>You can now log in, browse available rooms, and make bookings with ease.</p>
+                <p>If you have any questions, feel free to reach out to our support team.</p>
+                <p>Thank you,<br>The Team</p>
+            </body>
+        </html>"""
+
+        recipient_email = user.email if user.email else db.get_user_email(user)
+        background_tasks.add_task(self.send_email, recipient_email, subject, body)
+        return "Account creation email sent."
 
     def booking_cancelled(self, booking: Booking, background_tasks: BackgroundTasks) -> str:
 
