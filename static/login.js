@@ -1,6 +1,10 @@
 function onload() {
     loginBtn = document.getElementById("loginBtn");
-    loginBtn.addEventListener("click", loginClick);
+    //loginBtn.addEventListener("click", loginClick);
+    document.getElementById("login_form").addEventListener("submit", function (e) {
+        e.preventDefault();
+        loginClick(); 
+      });
 }
 
 async function loginClick(){
@@ -16,10 +20,7 @@ async function loginClick(){
     console.log("Login status:", loginStatus);
     alert("Login status: " + loginStatus);
     if (loginStatus) {
-        console.log("Login successful");
-        alert("Login successful");
         setTimeout(() => {
-            
             window.location.href = "/booking";
         }, 1500);
     }
@@ -33,30 +34,25 @@ async function verifyUser(username, password) {
             body: JSON.stringify({ username, password })
         });
 
-        console.log("Response status:", response.status);
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        console.log("Data received:", data);
-
-        // Check if data is empty or token is missing
-        if (data && data.token) {
+        const text = await response.text();
+        const data = JSON.parse(text); 
+    
+        if (response.ok && data.token) {
             localStorage.setItem("token", data.token);
-            console.log("Token saved:", data.token);
             return true;
         } else {
             alert("Login failed: " + (data.message || "No token received"));
             return false;
         }
+    
     } catch (err) {
         console.error("Login error:", err);
         alert("Login error: " + err.message);
         return false;
     }
+    
 }
+
 
 
 function confirmCredentials(username, password){

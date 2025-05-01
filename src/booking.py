@@ -5,7 +5,7 @@ from api import API
 from database import Booking, DB, Room
 from notification import NotificationManager
 from fastapi.responses import JSONResponse
-
+from dataclasses import asdict
 class BookingManager(API):
     prefix = "/booking"
 
@@ -82,18 +82,25 @@ class BookingManager(API):
     class GetBookings:
         token: str
 
-    async def get_bookings(self, bookings: GetBookings) -> list[Booking]:
+    
+
+    async def get_bookings(self, bookings: GetBookings):
         """ Returns a list of active bookings for this user """
-        
+
         async with DB() as db:
             if not await db.verify_token(bookings.token):
                 print("User not found")
                 raise HTTPException(status_code=404, detail="User not found")
+
             all_bookings = await db.get_bookings_by_token(bookings.token)
             if not all_bookings:
                 print("No bookings found")
                 raise HTTPException(status_code=404, detail="No bookings found")
-            return JSONResponse(content={"bookings": all_bookings}, status_code=200)
+
+            # Convert each Booking object to a dict
+            print(all_bookings)
+            booking_dicts = [asdict(b) for b in all_bookings]
+            return JSONResponse(content={"bookings": booking_dicts}, status_code=200)
 
     @dataclass
     class GetBookingsForDate:

@@ -20,11 +20,21 @@ class User:
 
 @dataclass
 class Booking:
+
     id: int
     user: User
     room: Room
     time: int
-
+    duration: Optional[float] = None
+    building: Optional["Building"] = None  
+@dataclass
+class Building:
+    id: int
+    name: str
+    address_1: str
+    address_2: str
+    opening_time: str
+    closing_time: str
 class DB:
     def __init__(self):
         self.db = None
@@ -76,6 +86,16 @@ class DatabaseManager:
             return result[0]  # not result because it is a tuple
         return "Error. User not found"
 
+    async def delete_token(self, token: str) -> bool:
+        """Delete the token from the database."""
+        try:
+            await self.conn.execute("DELETE FROM Authentication WHERE token = ?", (token,))
+            await self.conn.commit()
+            return True
+        except Exception as e:
+            print("Token deletion error:", e)
+            return False
+        
     async def create_token(self, user: User) -> str:
         """Generate and store an authentication token for the given username."""
         try:
@@ -141,7 +161,7 @@ class DatabaseManager:
             """,
             (token,)
         ) as cur:
-            if result := cur.fetchone():
+            if result := await cur.fetchone():
                 return User(
                     # id=result["user_id"],
                     username=result[1],
@@ -161,7 +181,7 @@ class DatabaseManager:
             """,
             (booking_id,)
         ) as cur:
-            if result := cur.fetchone():
+            if result := await cur.fetchone():
                 return User(
                     # id=result["user_id"],
                     username=result["username"],
@@ -330,7 +350,7 @@ class DatabaseManager:
                 bookings.append(Booking(id=booking_id, user=user, room=room, time=start_time))
 
             return bookings  # Return the list of Booking objects
-
+        
     async def get_bookings_by_token(self, token: str) -> list[Booking]:
         """Returns all current/future bookings for a user identified by their token, including building info"""
         # Get user_id from token
@@ -342,7 +362,7 @@ class DatabaseManager:
             if result is None:
                 return []  # Invalid token or not found
             user_id = result[0]
-
+            user = await self.get_user(token)
         async with self.conn.execute(
             '''
             SELECT b.booking_id, b.building_id, b.room_id, b.start_time, b.duration, b.access_code, 
@@ -351,12 +371,13 @@ class DatabaseManager:
             JOIN User_Booking ub ON b.booking_id = ub.booking_id
             JOIN Building bl ON b.building_id = bl.building_id
             WHERE ub.user_id = ?
-              AND datetime(b.start_time, '+' || b.duration || ' minutes') > datetime('now')
             ORDER BY b.start_time;
             ''',
             (user_id,)
         ) as cur:
             results = await cur.fetchall()
+            print("results")
+            print(results)
             bookings = []
 
             for result in results:
@@ -372,7 +393,7 @@ class DatabaseManager:
                 opening_time = result[9]
                 closing_time = result[10]
 
-                user = self.get_user_from_booking(user_id)  # You may need to `await` this if it's async
+               
                 room = Room(id=room_id)
                 building = Building(
                     id=building_id,
@@ -388,9 +409,10 @@ class DatabaseManager:
                     user=user,
                     room=room,
                     time=start_time,
-                    building=building
+                    building=building,
+                    duration=duration
                 ))
-
+            print("bookings" + str(len(bookings)) + "user" + user.username + " "+ str(user_id))
             return bookings
 
     async def get_room(self, room_id: int) -> Room:

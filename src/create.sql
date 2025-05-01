@@ -99,9 +99,9 @@ VALUES (1, 'study room', 10, 'available');
 
 INSERT INTO Booking (building_id, room_id, start_time, duration, access_code)
 VALUES
-(1, 1, '2025-05-01 10:00', '1', 'ABC123'),
-(1, 1, '2025-05-02 14:00', '2', 'DEF456'),
-(1, 1, '2025-05-03 09:30', '1.5', 'GHI789');
+(1, 1, 1746084000, 1, 'ABC123'),
+(1, 1, 1746175200, 2, 'DEF456'),
+(1, 1, 1746255000, 1.5, 'GHI789');
 
 INSERT INTO User_Booking (user_id, booking_id)
 VALUES

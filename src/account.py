@@ -14,6 +14,7 @@ class AccountManager(API):
         self.router.add_api_route("/login", self.login, methods=["POST"])
         self.router.add_api_route("/logout", self.logout, methods=["POST"])
         self.router.add_api_route("/register", self.register, methods=["POST"])
+        self.router.add_api_route("/me", self.me, methods=["POST"])
         self.login_attempts = defaultdict(lambda: {"count": 0, "last_attempt": None})
 
     @dataclass
@@ -21,36 +22,52 @@ class AccountManager(API):
         username: str
         password: str
 
-    async def login(self, login: Login) -> str:
+    async def me(self, token: str) -> JSONResponse:
+        """ Returns the user object for the given token """
+        async with DB() as db:
+            user: User = await db.get_user_from_token(token)
+            if user is None:
+                return JSONResponse(content={"message": "Invalid token"}, status_code=401)
+            return JSONResponse(content={"username": user.username}, status_code=200)
+
+    async def login(self, login: Login) -> JSONResponse:
         print(f"Login attempt for {login.username}")
-        # Needs to return either a token or a error message for the client (probably json)
-        """ Returns the users token if login succeful"""
         async with DB() as db:
             user: User = await db.get_user_from_username(login.username)
             if user is None:
                 print(f"User not found: {login.username}")
-                return JSONResponse(content={"message": "Invalid username or password"}, status_code=400)
+                return JSONResponse(content={"message": "Invalid username or password"}, status_code=401)
+
             password = await db.get_password(user)
             print(f"User found: {user.username}")
             loginStatus = await self.verifyPassword(login.password, password)
-            if  loginStatus:
+
+            if loginStatus:
                 token = await db.create_token(user)
-                #self.reset_failed_attempts(user.username)
                 print(f"Login successful: {user.username} & {token}")
-                return JSONResponse(content={"token": token}, status_code=400)
+                return JSONResponse(content={"token": token}, status_code=200)  # ✅ Fixed here
+
             print(f"Login incorrect password: {user.username}")
-            # If the user is not found or the password is incorrect, record the failed attempt
-            if self.get_failed_attempts(user.username) > 3:
-                return JSONResponse(content={"message": "Too many failed attempts: Please try contact support"}, status_code=400) #error, lock out user or require email verify or pass reset
             self.record_failed_attempt(user.username)
-            return JSONResponse(content={"message": "Invalid username or password"}, status_code=400) #error need help ben pls
+
+            if self.get_failed_attempts(user.username) > 3:
+                return JSONResponse(
+                    content={"message": "Too many failed attempts. Please contact support."},
+                    status_code=403
+                )
+
+            return JSONResponse(content={"message": "Invalid username or password"}, status_code=401)
 
     @dataclass
     class Logout:
         token: str
 
-    def logout(self, logout: Logout) -> str:
-        return ""
+    async def logout(self, logout: Logout) -> str:
+        """ invalidates the token """
+        async with DB() as db:  
+            await db.delete_token(token=logout.token)
+        
+        return "Logout successful"
 
     @dataclass
     class Register:
