@@ -122,9 +122,21 @@ class BookingManager(API):
 
             return await db.find_booking(booking.booking_id)
 
-    def get_rooms(self) -> list[Room]:
-        """Get all the rooms"""
-        return []
+    async def get_rooms(self) -> list[Room]:
+        """ Returns a list of all rooms """
+        async with DB() as db:
+            all_rooms = await db.get_rooms()
+            if not all_rooms:
+                raise HTTPException(status_code=404, detail="No rooms found")
+            all_buildings = await db.get_buildings()
+            if not all_buildings:
+                raise HTTPException(status_code=404, detail="No buildings found")
+            print(all_rooms)
+            rooms_data = [room.__dict__ for room in all_rooms]
+            buildings_data = [b.__dict__ for b in all_buildings]
+            # Optional: Remove duplicates by building name (or ID)
+            unique_buildings = {b['name']: b for b in buildings_data}.values()
+            return JSONResponse(content={"rooms": rooms_data, "buildings": buildings_data}, status_code=200)
     
     @dataclass
     class GetRoom:

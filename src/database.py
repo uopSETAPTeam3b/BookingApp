@@ -10,6 +10,9 @@ from pydantic.dataclasses import dataclass
 @dataclass
 class Room:
     id: int
+    name:str
+    building_id: int
+    type: Optional[str] = None
 
 
 @dataclass
@@ -286,7 +289,56 @@ class DatabaseManager:
 
                 return Booking(booking_id, user, room, start_time)
             return "Booking doesn't exist."
+    async def get_rooms(self) -> list[Room]:
+        """ Returns a list of all rooms """
+        # Query to get all rooms from the Room table
+        async with self.conn.execute(
+            '''
+            SELECT room_id, room_name, building_id, room_type FROM Room;
+            '''
+        ) as cur:
 
+            results = await cur.fetchall()
+            rooms = []  # List to hold Room objects
+            for result in results:
+                room_id = result[0]
+                room_name = result[1]
+                building_id = result[2]
+                room_type = result[3] if len(result) > 3 else None  # Check if room_type exists
+
+                # Create Room object and append to the list
+                rooms.append(Room(id=room_id, name=room_name, building_id=building_id, type=room_type))
+            return rooms
+
+    async def get_buildings(self) -> list[Building]:
+        """ Returns a list of all buildings """
+        # Query to get all buildings from the Building table
+        async with self.conn.execute(
+            '''
+            SELECT building_id, building_name, address_1, address_2, opening_time, closing_time FROM Building;
+            '''
+        ) as cur:
+
+            results = await cur.fetchall()
+            buildings = []
+            for result in results:  
+                building_id = result[0]
+                building_name = result[1]
+                address_1 = result[2]
+                address_2 = result[3]
+                opening_time = result[4]
+                closing_time = result[5]
+
+                # Create Building object and append to the list
+                buildings.append(Building(
+                    id=building_id,
+                    name=building_name,
+                    address_1=address_1,
+                    address_2=address_2,
+                    opening_time=opening_time,
+                    closing_time=closing_time
+                ))
+            return buildings  # Return the list of Building objects
     async def add_booking(self, room_id: int, time: int, token: str) -> Booking:
         """ Adds a booking to the database  """
         # query must insert booking into database

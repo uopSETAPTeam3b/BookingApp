@@ -75,6 +75,36 @@ function getIdForRoom(room) {
     return Object.keys(roomids).find(key => roomids[key] === room)
 }
 
+async function fetchRoomsAndBuildings() {
+    try {
+        const response = await fetch("/booking/get_rooms", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({})
+        });
+
+        if (!response.ok) throw new Error("Failed to fetch data");
+
+        const data = await response.json();
+        const { rooms, buildings } = data;
+
+        populateBuildingDropdown(buildings);
+    } catch (error) {
+        console.error("Error fetching rooms/buildings:", error);
+    }
+}
+function populateBuildingDropdown(buildings) {
+    const buildingSelect = document.getElementById("buildingSelect");
+    buildingSelect.innerHTML = '<option value="">Select a Building</option>';
+    console.log(buildings)
+    buildings.forEach(building => {
+        const option = document.createElement("option");
+        option.value = building;
+        option.textContent = building.name;
+        buildingSelect.appendChild(option);
+    });
+}
+
 export function renderBookingTable() {
     let table = document.getElementById("bookings-table")
 
@@ -169,4 +199,5 @@ document.addEventListener('DOMContentLoaded', () => {
     updateBookingTable().then(() => {
         initFilters()
     });
+    fetchRoomsAndBuildings()
 });
