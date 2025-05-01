@@ -103,7 +103,7 @@ VALUES
 ('Arts Building', '77 Creative Street', 'Campus F', '09:00', '17:00');
 
 INSERT INTO Room (building_id, room_name, room_type, room_capacity, room_availability_status) VALUES
-(1, '1.0', 'study room', 10, 'available')
+(1, '1.0', 'study room', 10, 'available'),
 -- Science Hall (Building 2)
 (2, '2.01', 'study room', 12, 'available'),
 (2, '2.02', 'lecture room', 60, 'available'),
