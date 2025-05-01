@@ -65,22 +65,40 @@ class NotificationManager:
         background_tasks.add_task(self.send_email, recipient_email, subject, body)
         return "Account creation email sent."
 
-    def booking_cancelled(self, booking: Booking, background_tasks: BackgroundTasks) -> str:
+    def booking_cancelled(self, booking: Booking, strikes:int, newStrike:bool, background_tasks: BackgroundTasks) -> str:
 
         """Sends notification email when a booking is cancelled."""
-        subject = "Booking Cancellation Notice"
-        body = f"""<html>
-            <body>
-                <h2>Booking Cancellation Notice</h2>
-                <p>We need to inform you that your booking has been cancelled. Below are the details of the cancelled booking:</p>
-                <ul>
-                    <li><strong>Room:</strong> {booking.room}</li>
-                    <li><strong>Booking Time:</strong> {booking.time}</li>
-                </ul>
-                <p>If you believe this cancellation was made in error or if you would like to reschedule, please contact Us.</p>
-                <p>Thank you</p>
-            </body>
-        </html>"""
+        if newStrike == True:
+            subject = "Booking Cancellation Notice - Strike Issued"
+            body = f"""<html>
+                <body>
+                    <h2>Booking Cancellation Notice</h2>
+                    <p>We regret to inform you that your booking has been cancelled. Below are the details of the cancelled booking:</p>
+                    <ul>
+                        <li><strong>Room:</strong> {booking.room}</li>
+                        <li><strong>Booking Time:</strong> {booking.time}</li>
+                    </ul>
+                    <p>Please note that a strike has been issued to your account due to this cancellation.</p>
+                    <p>Number of strikes against account: {strikes}</p>
+                    <p>If you believe this cancellation was made in error or if you would like to reschedule, please contact us.</p>
+                    <p>Thank you</p>
+                </body>
+            </html>"""
+        else:
+            subject = "Booking Cancellation Notice"
+            body = f"""<html>
+                <body>
+                    <h2>Booking Cancellation Notice</h2>
+                    <p>We need to inform you that your booking has been cancelled. Below are the details of the cancelled booking:</p>
+                    <ul>
+                        <li><strong>Room:</strong> {booking.room}</li>
+                        <li><strong>Booking Time:</strong> {booking.time}</li>
+                    </ul>
+                    <p>If you believe this cancellation was made in error or if you would like to reschedule, please contact Us.</p>
+                    <p>Thank you</p>
+                </body>
+            </html>"""
+        
         background_tasks.add_task(self.send_email, booking.user.email, subject, body)
 
 

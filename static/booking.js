@@ -98,14 +98,13 @@ async function cancelBtnClick(bookingId) {
         }
 
         const data = await response.json();
-        console.log('Booking cancelled:', data);
-        // Optional: show a success message or update UI
+        fetchBookings(token);  // Refresh bookings after cancellation
     } catch (error) {
         console.error('Error cancelling booking:', error);
         // Optional: show an error message to user
     }
 }
-
+window.cancelBtnClick = cancelBtnClick;
 function shareBtnClick() {
     const token = localStorage.getItem("token");
     

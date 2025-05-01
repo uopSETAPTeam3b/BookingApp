@@ -77,6 +77,26 @@ class DatabaseManager:
         await self.conn.commit()
         return self
 
+    async def issue_strike_to_user(self, user_id: int) -> int:
+        """ Issues a strike to a user """
+        try:
+            await self.conn.execute(
+                "UPDATE User SET offence_count = offence_count + 1 WHERE user_id = ?",
+                (user_id,)
+            )
+            await self.conn.commit()
+            
+            async with self.conn.execute(
+                "SELECT offence_count FROM User WHERE user_id = ?",
+                (user_id,)
+            ) as cursor:
+                result = await cursor.fetchone()
+                return result[0] if result else None
+    
+        except Exception as e:
+            print("Error issuing strike:", e)
+            return None
+    
     async def get_email(self, user_id: int) -> str:
         """ Gets a email from a user """
         # takes a user_id and returns the email of the user

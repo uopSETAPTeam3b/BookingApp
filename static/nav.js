@@ -3,7 +3,10 @@ async function onload() {
     const bookButton = document.getElementById("bookbutton");
     const bookingsButton = document.getElementById("bookings");
     const loginButton = document.getElementById("loginout");
-
+    const userImage = document.getElementById("userImage");
+    userImage.addEventListener("click", () => {
+        window.location.href = "/account";
+    });
     homeButton.addEventListener("click", () => {
         window.location.href = "/welcome";
     });

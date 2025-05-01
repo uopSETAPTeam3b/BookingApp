@@ -1,6 +1,6 @@
 from fastapi import HTTPException
 from pydantic.dataclasses import dataclass
-
+from datetime import datetime, timedelta, timezone
 from api import API
 from database import Booking, DB, Room
 from notification import NotificationManager
@@ -53,13 +53,20 @@ class BookingManager(API):
         async with DB() as db:
             if not await db.verify_token(cancel.token):
                 raise HTTPException(status_code=404, detail="User not found")
-            print("cancel.booking_id", cancel.booking_id)
             booking = await db.get_booking(cancel.booking_id)
             if not booking:
                 raise HTTPException(status_code=404, detail="Booking not found")
+            booking_time = datetime.fromtimestamp(booking.time, tz=timezone.utc)
+            now = datetime.now(timezone.utc)
+            newStrike = False
+            if 0 <= (booking_time - now).total_seconds() <= 1800:  # 1800 seconds = 30 minutes
+                
+                strikes = await db.issue_strike_to_user(booking.user_id)
+                newStrike = True
+                
+
             await db.remove_booking(cancel.booking_id)
-            print(booking)
-            self.nm.booking_cancelled(booking, background_tasks)
+            self.nm.booking_cancelled(booking, strikes, newStrike, background_tasks)
             return "Booking cancelled"
 
     @dataclass
@@ -77,6 +84,7 @@ class BookingManager(API):
             if not share_to:
                 # status code needs checking
                 raise HTTPException(status_code=404, detail="User not found")
+           
             booking = await db.get_booking(share.booking_id)
             self.nm.share_booking(booking)
             return ""
@@ -92,16 +100,13 @@ class BookingManager(API):
 
         async with DB() as db:
             if not await db.verify_token(bookings.token):
-                print("User not found")
                 raise HTTPException(status_code=404, detail="User not found")
 
             all_bookings = await db.get_bookings_by_token(bookings.token)
             if not all_bookings:
-                print("No bookings found")
                 raise HTTPException(status_code=404, detail="No bookings found")
 
             # Convert each Booking object to a dict
-            print(all_bookings)
             booking_dicts = [asdict(b) for b in all_bookings]
             return JSONResponse(content={"bookings": booking_dicts}, status_code=200)
 
@@ -134,7 +139,6 @@ class BookingManager(API):
             all_buildings = await db.get_buildings()
             if not all_buildings:
                 raise HTTPException(status_code=404, detail="No buildings found")
-            print(all_rooms)
             rooms_data = [room.__dict__ for room in all_rooms]
             buildings_data = [b.__dict__ for b in all_buildings]
             # Optional: Remove duplicates by building name (or ID)
