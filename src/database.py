@@ -372,11 +372,25 @@ class DatabaseManager:
         # Query to get all future/current bookings
         async with self.conn.execute(
             '''
-            SELECT b.booking_id, b.building_id, b.room_id, b.start_time, b.duration, b.access_code, ub.user_id
-            FROM Booking b
-            JOIN User_Booking ub ON b.booking_id = ub.booking_id
-            WHERE datetime(b.start_time, '+' || b.duration || ' minutes') > datetime('now')
-            ORDER BY b.start_time;
+            SELECT 
+                b.booking_id, 
+                b.building_id, 
+                b.room_id, 
+                r.room_name, 
+                b.start_time, 
+                b.duration, 
+                b.access_code, 
+                ub.user_id
+            FROM 
+                Booking b
+            JOIN 
+                User_Booking ub ON b.booking_id = ub.booking_id
+            JOIN 
+                Room r ON b.room_id = r.room_id
+            WHERE 
+                datetime(b.start_time, '+' || b.duration || ' minutes') > datetime('now')
+            ORDER BY 
+                b.start_time;
             '''
         ) as cur:
 
@@ -387,16 +401,19 @@ class DatabaseManager:
                 booking_id = result[0]  # booking_id
                 building_id = result[1]  # building_id
                 room_id = result[2]      # room_id
-                start_time = result[3]   # start_time
-                duration = result[4]      # duration
-                access_code = result[5]   # access_code
-                user_id = result[6]       # user_id
+                room_name = result[3]
+                start_time = result[4]   # start_time
+                duration = result[5]      # duration
+                access_code = result[6]   # access_code
+                user_id = result[7]       # user_id
 
                 # Retrieve User object from user_id
                 user = self.get_user_from_booking(user_id)
 
                 # Create Room object
-                room = Room(id=room_id)
+                room = Room(id=room_id,
+                            name=room_name,
+                            building_id=building_id)
 
                 # Create Booking object and append to the list
                 bookings.append(Booking(id=booking_id, user=user, room=room, time=start_time))
@@ -416,14 +433,32 @@ class DatabaseManager:
             user_id = result[0]
             user = await self.get_user(token)
         async with self.conn.execute(
-            '''
-            SELECT b.booking_id, b.building_id, b.room_id, b.start_time, b.duration, b.access_code, 
-                   bl.building_name, bl.address_1, bl.address_2, bl.opening_time, bl.closing_time
-            FROM Booking b
-            JOIN User_Booking ub ON b.booking_id = ub.booking_id
-            JOIN Building bl ON b.building_id = bl.building_id
-            WHERE ub.user_id = ?
-            ORDER BY b.start_time;
+        '''
+            SELECT 
+                b.booking_id, 
+                b.building_id, 
+                b.room_id, 
+                r.room_name,
+                b.start_time, 
+                b.duration, 
+                b.access_code, 
+                bl.building_name, 
+                bl.address_1, 
+                bl.address_2, 
+                bl.opening_time, 
+                bl.closing_time
+            FROM 
+                Booking b
+            JOIN 
+                User_Booking ub ON b.booking_id = ub.booking_id
+            JOIN 
+                Building bl ON b.building_id = bl.building_id
+            JOIN 
+                Room r ON b.room_id = r.room_id  
+            WHERE 
+                ub.user_id = ?
+            ORDER BY 
+                b.start_time;
             ''',
             (user_id,)
         ) as cur:
@@ -436,17 +471,17 @@ class DatabaseManager:
                 booking_id = result[0]
                 building_id = result[1]
                 room_id = result[2]
-                start_time = result[3]
-                duration = result[4]
-                access_code = result[5]
-                building_name = result[6]
-                address_1 = result[7]
-                address_2 = result[8]
-                opening_time = result[9]
-                closing_time = result[10]
+                room_name = result[3]  # Extract room_name from the result
+                start_time = result[4]
+                duration = result[5]
+                access_code = result[6]
+                building_name = result[7]
+                address_1 = result[8]
+                address_2 = result[9]
+                opening_time = result[10]
+                closing_time = result[11]
 
-               
-                room = Room(id=room_id)
+                room = Room(id=room_id, name=room_name, building_id=building_id)  # Create Room instance with name
                 building = Building(
                     id=building_id,
                     name=building_name,
@@ -455,6 +490,7 @@ class DatabaseManager:
                     opening_time=opening_time,
                     closing_time=closing_time
                 )
+
 
                 bookings.append(Booking(
                     id=booking_id,
