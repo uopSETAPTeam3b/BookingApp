@@ -85,11 +85,11 @@ CREATE TABLE Room_Facility (
 --- insert some sample data into the tables ---
 INSERT INTO User (username, password, email, phone_number, offence_count, warning_type, role)
 VALUES 
-('alice', '$2b$12$HwfMvmCmyRIh0syYp3cnjeQijB3pwUAgjHKkLdaQzWdQqaY3pCe4m', 'alice@example.com', '07111111111', 0, 'none', 'user'),
-('bob', '$2b$12$QGH/X6f5jU5.Xhl2y1BvJ.p1FyGYmY0EtXBH55QkV6Mm9o.HYeHzW', 'bob@example.com', '07222222222', 1, 'minor', 'user'),
-('charlie', '$2b$12$8g3e6RmaIcsgtFfUtha1guPZXek6pd4NL6PTK50XfGkYgOqlOBnui', 'charlie@example.com', '07333333333', 0, 'none', 'admin'),
-('diana', '$2b$12$mBVfStlBlhU6hNK9xy444uej9zb89SKBLPG2PJKEPkj7pjsgM7p0q', 'diana@example.com', NULL, 2, 'major', 'user'),
-('edward', '$2b$12$5bcWQvtGnDSzFG1qM6rrSeug7iisB6L8kn7sBQ3V.ktO9lFzEaCxm', 'edward@example.com', '07444444444', 0, 'none', 'user');
+('alice@gmail.com', '$2b$12$HwfMvmCmyRIh0syYp3cnjeQijB3pwUAgjHKkLdaQzWdQqaY3pCe4m', 'alice@example.com', '07111111111', 0, 'none', 'user'),
+('bob@gmail.com', '$2b$12$QGH/X6f5jU5.Xhl2y1BvJ.p1FyGYmY0EtXBH55QkV6Mm9o.HYeHzW', 'bob@example.com', '07222222222', 1, 'minor', 'user'),
+('charlie@gmail.com', '$2b$12$8g3e6RmaIcsgtFfUtha1guPZXek6pd4NL6PTK50XfGkYgOqlOBnui', 'charlie@example.com', '07333333333', 0, 'none', 'admin'),
+('diana@gmail.com', '$2b$12$mBVfStlBlhU6hNK9xy444uej9zb89SKBLPG2PJKEPkj7pjsgM7p0q', 'diana@example.com', NULL, 2, 'major', 'user'),
+('edward@gmail.com', '$2b$12$5bcWQvtGnDSzFG1qM6rrSeug7iisB6L8kn7sBQ3V.ktO9lFzEaCxm', 'edward@example.com', '07444444444', 0, 'none', 'user');
 
 INSERT INTO Building (building_name, address_1, address_2, opening_time, closing_time)
 VALUES ('Engineering Building', '123 Tech Street', 'Campus A', '08:00', '18:00');

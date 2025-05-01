@@ -6,7 +6,7 @@
   --text-color: #333333;
   --input-color: #F3F0FF;
   --background-color: rgba(255, 255, 255, 0.95);
-  --background-image: url(../static/lightback.png);
+  --background-image: url(/lightback.png);
 }
 
 .darkmode {

@@ -27,16 +27,18 @@ class AccountManager(API):
         """ Returns the users token if login succeful"""
         async with DB() as db:
             user: User = await db.get_user_from_username(login.username)
-            password = await db.get_password(user)
             if user is None:
-                print(f"User not found: {user.username}")
-                return ""
+                print(f"User not found: {login.username}")
+                return JSONResponse(content={"message": "Invalid username or password"}, status_code=400)
+            password = await db.get_password(user)
             print(f"User found: {user.username}")
             loginStatus = await self.verifyPassword(login.password, password)
             if  loginStatus:
                 token = await db.create_token(user)
                 #self.reset_failed_attempts(user.username)
-                return JSONResponse(content={"token": token}, status_code=200)
+                print(f"Login successful: {user.username} & {token}")
+                return JSONResponse(content={"token": token}, status_code=400)
+            print(f"Login incorrect password: {user.username}")
             # If the user is not found or the password is incorrect, record the failed attempt
             if self.get_failed_attempts(user.username) > 3:
                 return JSONResponse(content={"message": "Too many failed attempts: Please try contact support"}, status_code=400) #error, lock out user or require email verify or pass reset

@@ -1,10 +1,10 @@
 async function onload() {
     const token = localStorage.getItem("token");
-    if (!token) {
-        alert("No token found. Please log in.");
-        window.location.href = "/Auth_Page";  // Redirect to login page
-        return;
-    }
+    //if (!token) {
+    //    alert("No token found. Please log in.");
+    //    window.location.href = "/login";  // Redirect to login page
+    //    return;
+    //}
     fetchBookings(token);  // Fetch bookings using the token
 
 }
