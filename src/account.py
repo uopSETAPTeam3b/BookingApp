@@ -14,7 +14,7 @@ class AccountManager(API):
         self.router.add_api_route("/login", self.login, methods=["POST"])
         self.router.add_api_route("/logout", self.logout, methods=["POST"])
         self.router.add_api_route("/register", self.register, methods=["POST"])
-        self.router.add_api_route("/me", self.me, methods=["POST"])
+        self.router.add_api_route("/me", self.me, methods=["GET"])
         self.login_attempts = defaultdict(lambda: {"count": 0, "last_attempt": None})
 
     @dataclass
@@ -25,7 +25,7 @@ class AccountManager(API):
     async def me(self, token: str) -> JSONResponse:
         """ Returns the user object for the given token """
         async with DB() as db:
-            user: User = await db.get_user_from_token(token)
+            user: User = await db.get_user(token)
             if user is None:
                 return JSONResponse(content={"message": "Invalid token"}, status_code=401)
             return JSONResponse(content={"username": user.username}, status_code=200)

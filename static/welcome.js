@@ -1,3 +1,5 @@
+import { checkLoggedInExpt } from "./nav.js";
+
 function addBookVectors() {
     const container = document.querySelector('.book-vectors');
     container.innerHTML = ''; 
@@ -40,10 +42,17 @@ function addBookVectors() {
     document.documentElement.classList.add('darkmode');
   }
   
-  window.addEventListener('DOMContentLoaded', () => {
-    addBookVectors();
-    document.querySelectorAll('.button').forEach(button => {
-      button.addEventListener('click', () => console.log(`${button.textContent} button clicked`));
-    });
-  });
+window.addEventListener('DOMContentLoaded', async () => {
+  const loggedIn = await checkLoggedInExpt()
+  console.log("Logged in status:", loggedIn); // Debug log
+  if (loggedIn){
+    document.getElementById("logged-out").style.display = 'none';
+    return;
+  };
+  document.getElementById("logged-out").style.display = 'block';
+  addBookVectors();
   window.addEventListener('resize', addBookVectors);
+  document.querySelectorAll('.button').forEach(button => {
+    button.addEventListener('click', () => console.log(`${button.textContent} button clicked`));
+  });
+});

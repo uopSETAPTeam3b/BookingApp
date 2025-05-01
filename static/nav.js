@@ -5,7 +5,7 @@ async function onload() {
     const loginButton = document.getElementById("loginout");
 
     homeButton.addEventListener("click", () => {
-        window.location.href = "/home";
+        window.location.href = "/welcome";
     });
     bookButton.addEventListener("click", () => {
         window.location.href = "/book";
@@ -26,9 +26,9 @@ async function onload() {
             localStorage.removeItem("token");
             try {
                 const bookingsList = document.getElementById('bookingList');
-                console.log("Bookings:", bookings);  // Debug log
+                console.log("Bookings:", bookings); 
               
-                bookingsList.innerHTML = ""; // Clear existing list
+                bookingsList.innerHTML = ""; 
                 const listItem = document.createElement('li');
                 listItem.innerHTML = "You are not logged in. Please log in to view your bookings.";
                 bookingsList.appendChild(listItem);
@@ -45,33 +45,37 @@ async function onload() {
        
     });
     const token = localStorage.getItem("token");
-    if (token) {
-        await fetch('/account/me', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ token })
-        })
-        .then(response => response.json())
-        .then(user => {
-            if (user) {
-                loginButton.innerText = "Logout";
-                document.getElementById("userImage").style.display = 'block';
-            } else {
-                loginButton.innerText = "login";
-                document.getElementById("userImage").style.display = 'none';
-            }
-        })
-        .catch(error => {
-            console.error('Error fetching user data:', error);
-            // Handle error
-        });
-        
-        
-    } else {
+    const loggedIn = await checkLoggedInExpt();
+    if (loggedIn) {
+        loginButton.innerText = "Logout";
+        document.getElementById("userImage").style.display = 'block';
+    }
+    else {
         loginButton.innerText = "Login";
+        document.getElementById("userImage").style.display = 'none';
+    }
+}
+export async function checkLoggedInExpt() {
+    console.log("Checking logged in status...");
+    const token = localStorage.getItem("token");
+
+    if (token) {
+        try {
+            const response = await fetch(`/account/me?token=${token}`, {
+                method: 'GET'
+            });
+            const user = await response.json();
+            if (user) {
+                return true;  // User is logged in
+            } else {
+                return false;  // User is not logged in
+            }
+        } catch (error) {
+            console.error('Error fetching user data:', error);
+            return false;  // Error occurred, treat as not logged in
+        }
+    } else {
+        return false;  // No token found, treat as not logged in
     }
 }
 
@@ -79,7 +83,7 @@ async function checkLoggedIn() {
     const token = localStorage.getItem("token");
     if (token) {
         await fetch('/account/me', {
-            method: 'POST',
+            method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json',
