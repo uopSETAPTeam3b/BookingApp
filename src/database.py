@@ -281,7 +281,7 @@ class DatabaseManager:
                 user_id = result[6]      # user_id
 
                 # Retrieve User object from user_id
-                user = await self.get_user_from_booking(user_id)
+                user = await self.get_user_from_booking(booking_id)
 
                 room = await self.get_room(room_id)
 

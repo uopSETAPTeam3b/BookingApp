@@ -84,7 +84,7 @@ function displayBookings(bookings) {
     bookings.forEach(booking => {
       const listItem = document.createElement('li');
       listItem.classList.add('booking-item');
-  
+      // Debug log
       // Format UNIX timestamp to readable time
       const startTime = new Date(booking.time * 1000).toLocaleString();
   
@@ -96,7 +96,7 @@ function displayBookings(bookings) {
         <strong>Duration:</strong> ${booking.duration ?? 'N/A'} hour(s)<br>
         <button class="btn btn-primary" onclick="cancelBtnClick(${booking.id})">cancel</button>
       `;
-  
+        
       bookingsList.appendChild(listItem);
     });
   }
@@ -106,6 +106,7 @@ function editBtnClick() {
 }
 
 async function cancelBtnClick(bookingId) {
+    console.log("Cancel button clicked for booking ID:", bookingId);
     const token = localStorage.getItem("token");
     try {
         const response = await fetch('/booking/cancel', {

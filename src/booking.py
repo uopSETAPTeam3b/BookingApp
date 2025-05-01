@@ -53,6 +53,7 @@ class BookingManager(API):
         async with DB() as db:
             if not await db.verify_token(cancel.token):
                 raise HTTPException(status_code=404, detail="User not found")
+            print("cancel.booking_id", cancel.booking_id)
             booking = await db.get_booking(cancel.booking_id)
             if not booking:
                 raise HTTPException(status_code=404, detail="Booking not found")
