@@ -26,3 +26,22 @@
   - go to https://github.com/uopSETAPTeam3b
   - find branch
   - create pull request 
+
+
+## How To Setup Notifications
+- Create a .env file in your main directory
+- add these lines
+
+smtp_username = ""
+smtp_password = ""
+
+- ask lewis for the username and password (this cannot be saved on the github)
+
+- now when the server tries to send a notification, it will use the google smtp api to send using the account i created.
+
+## Accounts
+- We all have an account and 3 bookings made for testing
+  - Log in using your uni email
+  - Passwords = welcome1234
+
+

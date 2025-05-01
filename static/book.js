@@ -76,6 +76,8 @@ function getIdForRoom(room) {
 }
 
 async function fetchRoomsAndBuildings() {
+    //Gets a list of all rooms and buildings from the server, 
+    // then populates the buildings drop down
     try {
         const response = await fetch("/booking/get_rooms", {
             method: "POST",

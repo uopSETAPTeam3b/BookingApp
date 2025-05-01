@@ -86,11 +86,13 @@ CREATE TABLE Room_Facility (
 --- insert some sample data into the tables ---
 INSERT INTO User (username, password, email, phone_number, offence_count, warning_type, role)
 VALUES 
-('alice@gmail.com', '$2b$12$HwfMvmCmyRIh0syYp3cnjeQijB3pwUAgjHKkLdaQzWdQqaY3pCe4m', 'alice@example.com', '07111111111', 0, 'none', 'user'),
-('bob@gmail.com', '$2b$12$QGH/X6f5jU5.Xhl2y1BvJ.p1FyGYmY0EtXBH55QkV6Mm9o.HYeHzW', 'bob@example.com', '07222222222', 1, 'minor', 'user'),
-('charlie@gmail.com', '$2b$12$8g3e6RmaIcsgtFfUtha1guPZXek6pd4NL6PTK50XfGkYgOqlOBnui', 'charlie@example.com', '07333333333', 0, 'none', 'admin'),
-('diana@gmail.com', '$2b$12$mBVfStlBlhU6hNK9xy444uej9zb89SKBLPG2PJKEPkj7pjsgM7p0q', 'diana@example.com', NULL, 2, 'major', 'user'),
-('edward@gmail.com', '$2b$12$5bcWQvtGnDSzFG1qM6rrSeug7iisB6L8kn7sBQ3V.ktO9lFzEaCxm', 'edward@example.com', '07444444444', 0, 'none', 'user');
+('up2211837@myport.ac.uk', '$2b$12$HwfMvmCmyRIh0syYp3cnjeQijB3pwUAgjHKkLdaQzWdQqaY3pCe4m', 'up2211837@myport.ac.uk', '07111111111', 0, 'none', 'user'),
+('up2194051@myport.ac.uk', '$2b$12$HwfMvmCmyRIh0syYp3cnjeQijB3pwUAgjHKkLdaQzWdQqaY3pCe4m', 'up2194051@myport.ac.uk', '07222222222', 1, 'minor', 'user'),
+('up2195798@myport.ac.uk', '$2b$12$HwfMvmCmyRIh0syYp3cnjeQijB3pwUAgjHKkLdaQzWdQqaY3pCe4m', 'up2195798@myport.ac.uk', '07333333333', 0, 'none', 'user'),
+('up2195798@myport.ac.uk', '$2b$12$HwfMvmCmyRIh0syYp3cnjeQijB3pwUAgjHKkLdaQzWdQqaY3pCe4m', 'up2195798@myport.ac.uk', '07635463633', 2, 'major', 'user'),
+('up2245678@myport.ac.uk', '$2b$12$HwfMvmCmyRIh0syYp3cnjeQijB3pwUAgjHKkLdaQzWdQqaY3pCe4m', 'up2245678@myport.ac.uk', '07444444444', 0, 'none', 'user'),
+('up2233199@myport.ac.uk', '$2b$12$HwfMvmCmyRIh0syYp3cnjeQijB3pwUAgjHKkLdaQzWdQqaY3pCe4m', 'up2233199@myport.ac.uk', '07555555555', 0, 'none', 'user'),
+('tj@myport.ac.uk', '$2b$12$HwfMvmCmyRIh0syYp3cnjeQijB3pwUAgjHKkLdaQzWdQqaY3pCe4m', 'tj@myport.ac.uk', '07666666666', 0, 'none', 'user');
 
 INSERT INTO Building (building_name, address_1, address_2, opening_time, closing_time)
 VALUES 
@@ -153,11 +155,30 @@ VALUES
 (1, 1, 1746175200, 2, 'DEF456'),
 (1, 1, 1746255000, 1.5, 'GHI789');
 
+
 INSERT INTO User_Booking (user_id, booking_id)
 VALUES
 (1, 1),
 (1, 2),
-(1, 3);
+(1, 3),
+(2, 1),
+(2, 2),
+(2, 3),
+(3, 1),
+(3, 2),
+(3, 3),
+(4, 1),
+(4, 2),
+(4, 3),
+(5, 1),
+(5, 2),
+(5, 3),
+(6, 1),
+(6, 2),
+(6, 3),
+(7, 1),
+(7, 2),
+(7, 3);
 
 
 

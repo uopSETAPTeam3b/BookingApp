@@ -28,6 +28,7 @@ class NotificationManager:
         with smtplib.SMTP_SSL(self.SMTP_SERVER, self.SMTP_PORT, timeout=10) as server:
             server.login(self.SMTP_USERNAME , self.SMTP_PASSWORD) 
             server.sendmail(self.SMTP_USERNAME, recipient_email, msg.as_string())
+        print(f"Email sent to {recipient_email} with subject: {subject}")
 
     def booking_complete(self, booking: Booking, background_tasks: BackgroundTasks) -> str:
         """Sends confirmation email when a room is booked."""
@@ -48,6 +49,7 @@ class NotificationManager:
         return "Booking confirmation email sent."
 
     def booking_cancelled(self, booking: Booking, background_tasks: BackgroundTasks) -> str:
+
         """Sends notification email when a booking is cancelled."""
         subject = "Booking Cancellation Notice"
         body = f"""<html>
@@ -62,7 +64,8 @@ class NotificationManager:
                 <p>Thank you</p>
             </body>
         </html>"""
-        background_tasks.add_task(self.send_email( db.get_user_email(booking.user), subject, body))
+        background_tasks.add_task(self.send_email, booking.user.email, subject, body)
+
 
         return "Cancellation email sent."
 

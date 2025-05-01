@@ -6,6 +6,7 @@ from database import Booking, DB, Room
 from notification import NotificationManager
 from fastapi.responses import JSONResponse
 from dataclasses import asdict
+from fastapi import BackgroundTasks
 class BookingManager(API):
     prefix = "/booking"
 
@@ -13,7 +14,7 @@ class BookingManager(API):
         super().__init__()
         self.nm = nm
         self.router.add_api_route("/book", self.book_room, methods=["POST"])
-        self.router.add_api_route("/cancel", self.cancel_room, methods=["POST"])
+        self.router.add_api_route("/cancel", self.cancel_booking, methods=["POST"])
         self.router.add_api_route("/share", self.share_room, methods=["POST"])
         self.router.add_api_route("/get_bookings", self.get_bookings, methods=["POST"], response_model=list[Booking])
         self.router.add_api_route("/get_bookings_for_date", self.get_bookings_for_date, methods=["POST"], response_model=list[Booking])
@@ -47,16 +48,17 @@ class BookingManager(API):
         token: str
         booking_id: int
 
-    async def cancel_room(self, cancel: CancelRoom) -> str:
+    async def cancel_booking(self, cancel: CancelRoom, background_tasks: BackgroundTasks) -> str:
         """ Cancels a room booking from a (only) validated user """
         async with DB() as db:
             if not await db.verify_token(cancel.token):
                 raise HTTPException(status_code=404, detail="User not found")
-            booking = await db.find_booking(cancel.booking_id)
+            booking = await db.get_booking(cancel.booking_id)
             if not booking:
                 raise HTTPException(status_code=404, detail="Booking not found")
-            booking = await db.remove_booking(cancel.booking_id)
-            self.nm.booking_cancelled(booking)
+            await db.remove_booking(cancel.booking_id)
+            print(booking)
+            self.nm.booking_cancelled(booking, background_tasks)
             return "Booking cancelled"
 
     @dataclass

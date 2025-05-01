@@ -186,10 +186,8 @@ class DatabaseManager:
         ) as cur:
             if result := await cur.fetchone():
                 return User(
-                    # id=result["user_id"],
-                    username=result["username"],
-                    email=result["email"],
-                    # role=result["role"]
+                    username=result[1],
+                    email=result[2]
                 )
         return None
 
@@ -261,7 +259,7 @@ class DatabaseManager:
     async def get_booking(self, booking_id: int) -> Booking:
         """ Returns a booking from a booking_id """
         # Query to get the booking details from the Booking table
-        async with self.conn.execute(
+        async with await self.conn.execute(
             '''
             SELECT b.booking_id, b.building_id, b.room_id, b.start_time, b.duration, b.access_code, ub.user_id
             FROM Booking b
@@ -271,8 +269,8 @@ class DatabaseManager:
             (booking_id,)
         ) as cur:
 
-            result = cur.fetchone()
-
+            result = await cur.fetchone()
+            
             if result:  # Check if a booking was found
                 booking_id = result[0]  # booking_id
                 building_id = result[1]  # building_id
@@ -283,9 +281,9 @@ class DatabaseManager:
                 user_id = result[6]      # user_id
 
                 # Retrieve User object from user_id
-                user = self.get_user_from_booking(user_id)
+                user = await self.get_user_from_booking(user_id)
 
-                room = self.get_room(room_id)
+                room = await self.get_room(room_id)
 
                 return Booking(booking_id, user, room, start_time)
             return "Booking doesn't exist."
@@ -353,7 +351,7 @@ class DatabaseManager:
     async def remove_booking(self, booking_id: int) -> bool:
         """ Removes a booking from the database using the booking_id """
 
-        booking = self.get_booking(booking_id)
+        booking = await self.get_booking(booking_id)
 
         if isinstance(booking, Booking):  # check if booking exists
 
@@ -361,10 +359,10 @@ class DatabaseManager:
 
             await self.conn.execute("DELETE FROM Booking WHERE booking_id = ?", (booking_id,))  # Delete from Booking table
 
-            await self.conn.commit()  # commit to db
+            await self.conn.commit()
 
-            return True  # successful removal
-        return False  # booking didn't exist
+            return True
+        return False  
 
 
     async def get_all_bookings(self) -> list[Booking]:
@@ -508,7 +506,7 @@ class DatabaseManager:
         # Query to get a room from the Room table
         async with self.conn.execute(
             '''
-            SELECT room_id FROM Room WHERE room_id = ?;
+            SELECT room_id, room_name, building_id FROM Room WHERE room_id = ?;
             ''',
             (room_id,)
         ) as cur:
@@ -516,12 +514,16 @@ class DatabaseManager:
             result = await cur.fetchone() 
 
             if result: 
-                return Room(id=result[0]) 
+                return Room(
+                    id=result[0],
+                    name=result[1],
+                    building_id=result[2]
+                )
             return "Room not found." 
 
     async def get_room_facilities(self, room_id: int) -> list[str]:
         """ Returns a list of facilities for a room """
-        # Query to get a list of facilities for the specified room
+        # Query t get a list of facilities for the specified room
 
         #set below f.facility_id to f.facility_name when the sql file is changed
         async with self.conn.execute(

@@ -94,10 +94,44 @@ function displayBookings(bookings) {
         <strong>Address:</strong> ${booking.building?.address_1 || ''}, ${booking.building?.address_2 || ''} <br>
         <strong>Start Time:</strong> ${startTime} <br>
         <strong>Duration:</strong> ${booking.duration ?? 'N/A'} hour(s)<br>
+        <button class="btn btn-primary" onclick="cancelBtnClick(${booking.id})">cancel</button>
       `;
   
       bookingsList.appendChild(listItem);
     });
   }
+function editBtnClick() {
+    const token = localStorage.getItem("token");
+    
+}
+
+async function cancelBtnClick(bookingId) {
+    const token = localStorage.getItem("token");
+    try {
+        const response = await fetch('/booking/cancel', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ token: token, booking_id: bookingId })
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to cancel booking');
+        }
+
+        const data = await response.json();
+        console.log('Booking cancelled:', data);
+        // Optional: show a success message or update UI
+    } catch (error) {
+        console.error('Error cancelling booking:', error);
+        // Optional: show an error message to user
+    }
+}
+
+function shareBtnClick() {
+    const token = localStorage.getItem("token");
+    
+}
 
 document.addEventListener('DOMContentLoaded', onload);
