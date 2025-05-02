@@ -4,7 +4,9 @@ async function onload() {
     const token = localStorage.getItem("token");
     console.log("Token:", token);
     const loginButton = document.getElementById("loginout");
-    if (await !checkLoggedInExpt(token) || token === null) {
+    const loggedStatus = await checkLoggedInExpt(token)
+    if (!loggedStatus || token === undefined) {
+        console.log("User is not logged in");
         const bookingsList = document.getElementById('bookingList');
         console.log("Bookings:", bookings);  // Debug log
         loginButton.innerText = "Login";

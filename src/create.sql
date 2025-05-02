@@ -11,10 +11,19 @@ CREATE TABLE User (
     username TEXT NOT NULL,
     password TEXT NOT NULL,
     email TEXT NOT NULL,
+    verified INTEGER DEFAULT 0 CHECK (verified IN (0, 1)),
     phone_number TEXT,
     offence_count INTEGER CHECK (offence_count >= 0) DEFAULT 0,
     warning_type TEXT CHECK (warning_type IN ('none', 'minor', 'major')) DEFAULT 'none',
     role TEXT NOT NULL CHECK (role IN ('admin', 'user')) DEFAULT 'user'
+);
+
+CREATE TABLE EmailVerification (
+    verify_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    verification_code TEXT,
+    created_at INTEGER,
+    FOREIGN KEY(user_id) REFERENCES User(user_id) ON DELETE CASCADE
 );
 
 CREATE TABLE Authentication (
@@ -93,6 +102,15 @@ VALUES
 ('up2245678@myport.ac.uk', '$2b$12$HwfMvmCmyRIh0syYp3cnjeQijB3pwUAgjHKkLdaQzWdQqaY3pCe4m', 'up2245678@myport.ac.uk', '07444444444', 0, 'none', 'user'),
 ('up2233199@myport.ac.uk', '$2b$12$HwfMvmCmyRIh0syYp3cnjeQijB3pwUAgjHKkLdaQzWdQqaY3pCe4m', 'up2233199@myport.ac.uk', '07555555555', 0, 'none', 'user'),
 ('up2208881@myport.ac.uk', '$2b$12$HwfMvmCmyRIh0syYp3cnjeQijB3pwUAgjHKkLdaQzWdQqaY3pCe4m', 'up2208881@myport.ac.uk', '07666666666', 0, 'none', 'user');
+
+INSERT INTO EmailVerification (user_id) VALUES
+(1),
+(2),
+(3),
+(4),
+(5),
+(6),
+(7);
 
 INSERT INTO Building (building_name, address_1, address_2, opening_time, closing_time)
 VALUES 

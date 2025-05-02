@@ -59,7 +59,6 @@ async function onload() {
     }
 }
 export async function checkLoggedInExpt() {
-    console.log("Checking logged in status...");
     const token = localStorage.getItem("token");
 
     if (token) {
@@ -68,7 +67,7 @@ export async function checkLoggedInExpt() {
                 method: 'GET'
             });
             const user = await response.json();
-            if (user) {
+            if (user.message !== "Invalid token") {
                 return true;  // User is logged in
             } else {
                 return false;  // User is not logged in
