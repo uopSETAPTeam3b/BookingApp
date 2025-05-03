@@ -1,0 +1,58 @@
+/* Container styling */
+main {
+    padding: 20px;
+    max-width: 1200px;
+    margin: auto;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Headline */
+main h1 {
+    font-size: 24px;
+    margin-bottom: 20px;
+}
+
+/* Booking list */
+#bookingList {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+/* Individual card styling */
+.booking-item {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    width: 280px;
+    padding: 15px 20px;
+    box-sizing: border-box;
+    transition: transform 0.2s ease;
+}
+
+.booking-item:hover {
+    transform: scale(1.02);
+}
+
+/* Strong tag styling */
+.booking-item strong {
+    color: #333;
+}
+
+/* Button */
+.booking-item .btn {
+    margin-top: 10px;
+    background-color: #007bff;
+    color: white;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.booking-item .btn:hover {
+    background-color: #0056b3;
+}
