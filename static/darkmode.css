@@ -1,6 +1,6 @@
 
 #theme-switch {
-    height: 40px;
+    height: 100px;
     width: 40px;
     padding: 0;
     border: none;
@@ -10,7 +10,7 @@
     justify-content: center;
     align-items: center;
     position: fixed;
-    top: 20px;
+    bottom: 20px;
     right: 20px;
     cursor: pointer;
   }
