@@ -1,9 +1,14 @@
 {%set page="book"%}
 {%include "nav.html"%}
 
-<link rel="stylesheet" href="book.css">
+<link rel="stylesheet" href="/book.css">
 <link rel="stylesheet" href="/darkmode.css">
 <link rel="stylesheet" href="/nav.css">
+<button id="theme-switch" title="Toggle Theme">
+    <img src="/light_mode.svg" alt="Light Mode" class="theme-icon light-icon">
+    <img src="/dark_mode.svg" alt="Dark Mode" class="theme-icon dark-icon">
+</button>
+
 <button id="expand-filter">Filters</button>
 <section id="filter" class="hidden">
     <div>
@@ -32,3 +37,4 @@
 
 <script src="book.js" type="module"></script>
 <script src="filter.js" type="module"></script>
+<script type="text/javascript" src="darkmode.js" defer></script>

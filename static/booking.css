@@ -60,7 +60,7 @@ main h1 {
 /* Button */
 .booking-item .btn {
     margin-top: 10px;
-    background-color: #007bff;
+    background-color: var(--accent-color);
     color: white;
     padding: 8px 12px;
     border: none;
@@ -74,9 +74,9 @@ main h1 {
 }
 
 .booking-item .btn:hover {
-    background-color: #0056b3;
+    background-color: var(--accent-color-hover);
 }
 
 .darkmode .booking-item .btn:hover {
-    background-color: #0056b3;
+    background-color: var(--accent-color-hover);
 }
