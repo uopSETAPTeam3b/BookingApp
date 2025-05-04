@@ -60,35 +60,3 @@ body {
     z-index: 10;
   }
   
-  #theme-switch {
-    height: 50px;
-    width: 50px;
-    padding: 0;
-    border: none;
-    border-radius: 50%;
-    background-color: var(--input-color);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    cursor: pointer;
-  }
-  
-  .theme-icon {
-    width: 24px;
-    height: 24px;
-  }
-  
-  .dark-icon {
-    display: none;
-  }
-  
-  .darkmode .light-icon {
-    display: none;
-  }
-  
-  .darkmode .dark-icon {
-    display: block;
-  }
