@@ -18,7 +18,6 @@ async function loginClick(){
 
     let loginStatus = await verifyUser(username, password);
     console.log("Login status:", loginStatus);
-    alert("Login status: " + loginStatus);
     if (loginStatus) {
         setTimeout(() => {
             window.location.href = "/booking";

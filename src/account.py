@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 from datetime import datetime
 from dataclasses import dataclass
 from api import API
-from database import User, DB
+from database import User, DB, LoggedInUser
 from notification import NotificationManager
 from fastapi import BackgroundTasks
 import bcrypt
@@ -19,6 +19,7 @@ class AccountManager(API):
         self.router.add_api_route("/logout", self.logout, methods=["POST"])
         self.router.add_api_route("/register", self.register, methods=["POST"])
         self.router.add_api_route("/me", self.me, methods=["GET"])
+        self.router.add_api_route("/accountDetails", self.accountDetails, methods=["GET"])
         self.login_attempts = defaultdict(lambda: {"count": 0, "last_attempt": None})
 
     @dataclass
@@ -26,14 +27,30 @@ class AccountManager(API):
         username: str
         password: str
 
-    async def me(self, token: str) -> JSONResponse:
-        """ Returns the user object for the given token """
+    async def accountDetails(self, token:str) -> JSONResponse:
+        """Returns full account details and associated universities for a user"""
         async with DB() as db:
             user: User = await db.get_user(token)
             if user is None:
                 return JSONResponse(content={"message": "Invalid token"}, status_code=401)
+
+            details = await db.get_account_details(user.id)
+
+            if "error" in details:
+                return JSONResponse(content={"message": details["error"]}, status_code=404)
+
+            return JSONResponse(content=details, status_code=200)
+    
+    async def me(self, token: str) -> JSONResponse:
+        """ Returns the user object for the given token """
+        async with DB() as db:
+            user: User = await db.get_user(token)
+            
+            if user is None:
+                return JSONResponse(content={"message": "Invalid token"}, status_code=401)
             return JSONResponse(content={"username": user.username}, status_code=200)
 
+    
     async def login(self, login: Login) -> JSONResponse:
         print(f"Login attempt for {login.username}")
         async with DB() as db:
@@ -66,6 +83,7 @@ class AccountManager(API):
     class Logout:
         token: str
 
+   
     async def logout(self, logout: Logout) -> str:
         """ invalidates the token """
         async with DB() as db:  

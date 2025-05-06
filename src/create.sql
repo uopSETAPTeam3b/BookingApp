@@ -34,6 +34,7 @@ CREATE TABLE Authentication (
 
 CREATE TABLE Building (
     building_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    university_id INTEGER NOT NULL REFERENCES University(university_id),
     building_name TEXT NOT NULL,
     address_1 TEXT NOT NULL,
     address_2 TEXT,
@@ -102,6 +103,7 @@ CREATE TABLE University (
 CREATE TABLE User_University (
     user_id INTEGER NOT NULL REFERENCES User(user_id),
     university_id INTEGER NOT NULL REFERENCES University(university_id),
+    status INTEGER DEFAULT 0 CHECK (status IN (0, 1)), -- 0 for inactive, 1 for active
     PRIMARY KEY (user_id, university_id)
 );
 
@@ -128,15 +130,15 @@ INSERT INTO EmailVerification (user_id) VALUES
 (6),
 (7);
 
-INSERT INTO Building (building_name, address_1, address_2, opening_time, closing_time)
+INSERT INTO Building (university_id, building_name, address_1, address_2, opening_time, closing_time)
 VALUES 
-('Engineering Building', '123 Tech Street', 'Campus A', '08:00', '18:00'),
-('Science Hall', '10 Quantum Road', 'Campus B', '08:00', '20:00'),
-('Library', '15 Book Lane', 'Campus Central', '07:30', '22:00'),
-('Computing Centre', '42 Silicon Ave', 'Campus C', '08:00', '21:00'),
-('Medical Block', '88 Health Blvd', 'Campus D', '08:00', '19:00'),
-('Business School', '5 Finance Drive', 'Campus E', '08:30', '18:30'),
-('Arts Building', '77 Creative Street', 'Campus F', '09:00', '17:00');
+(1,'Engineering Building', '123 Tech Street', 'Campus A', '08:00', '18:00'),
+(1,'Science Hall', '10 Quantum Road', 'Campus B', '08:00', '20:00'),
+(1,'Library', '15 Book Lane', 'Campus Central', '07:30', '22:00'),
+(1,'Computing Centre', '42 Silicon Ave', 'Campus C', '08:00', '21:00'),
+(1,'Medical Block', '88 Health Blvd', 'Campus D', '08:00', '19:00'),
+(1,'Business School', '5 Finance Drive', 'Campus E', '08:30', '18:30'),
+(1,'Arts Building', '77 Creative Street', 'Campus F', '09:00', '17:00');
 
 INSERT INTO Room (building_id, room_name, room_type, room_capacity, room_availability_status) VALUES
 (1, '1.0', 'study room', 10, 'available'),

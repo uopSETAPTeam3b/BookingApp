@@ -14,11 +14,15 @@ class Room:
     building_id: int
     type: Optional[str] = None
 
-
+@dataclass
+class LoggedInUser:
+    token: str
 @dataclass
 class User:
     username: str
     email: str
+    id: Optional[int] = None
+    role: Optional[str] = None
 
 
 @dataclass
@@ -96,7 +100,41 @@ class DatabaseManager:
         except Exception as e:
             print("Error issuing strike:", e)
             return None
+        
+    
+    async def get_account_details(self, user_id: int) -> dict:
+        """Returns full account details and associated universities for a user."""
 
+        # Fetch user details
+        async with self.conn.execute("""
+            SELECT user_id, username, email, phone_number, offence_count, role
+            FROM User WHERE user_id = ?
+        """, (user_id,)) as cursor:
+            user = await cursor.fetchone()
+
+        if not user:
+            return {"error": "User not found"}
+
+        # Fetch university associations
+        async with self.conn.execute("""
+            SELECT U.university_name, UU.status 
+            FROM User_University UU
+            JOIN University U ON UU.university_id = U.university_id
+            WHERE UU.user_id = ?
+        """, (user_id,)) as cursor:
+            universities = await cursor.fetchall()
+
+        return {
+            "id": user[0],
+            "username": user[1],
+            "email": user[2],
+            "phone_number": user[3],
+            "offence_count": user[4],
+            "role": user[5],
+            "universities": [
+                {"name": row[0], "status": row[1]} for row in universities
+            ]
+        }
     async def get_email(self, user_id: int) -> str:
         """ Gets a email from a user """
         # takes a user_id and returns the email of the user
@@ -194,7 +232,7 @@ class DatabaseManager:
         """Get user from authentication token"""
         async with self.conn.execute(
             """
-            SELECT u.user_id, u.username, u.email, u.role 
+            SELECT  u.username, u.email, u.role, u.user_id
             FROM User u 
             JOIN Authentication a ON u.user_id = a.user_id 
             WHERE a.token = ?
@@ -203,10 +241,10 @@ class DatabaseManager:
         ) as cur:
             if result := await cur.fetchone():
                 return User(
-                    # id=result["user_id"],
-                    username=result[1],
-                    email=result[2],
-                    # role=result["role"]
+                    username=result[0],
+                    email=result[1],
+                    id=result[3],
+                    role=result[2]
                 )
         return None
 
