@@ -73,7 +73,7 @@ function displayBookings(bookings) {
         <strong>Start Time:</strong> ${startTime} <br>
         <strong>Duration:</strong> ${booking.duration ?? 'N/A'} hour(s)<br>
         <button class="btn btn-primary" onclick="cancelBtnClick(${booking.id})">cancel</button>
-        <button class="btn btn-secondary" onclick="alterBooking(${booking.id}, ${Math.floor(Date.now() / 1000) + 3600},1, ${booking.room_id})">Edit</button>
+        <button class="btn btn-secondary" onclick="editBtnClick(${booking.id}, ${Math.floor(Date.now() / 1000) + 3600},1, ${booking.room_id})">Edit</button>
       `;
         
       bookingsList.appendChild(listItem);
@@ -81,13 +81,13 @@ function displayBookings(bookings) {
   }
 function editBtnClick(bookingId) {
     const token = localStorage.getItem("token");
-
+    openOverlay(bookingId);
     
 }
 
 async function alterBooking(bookingId, newTime,newDuration, newRoomId) {
     const token = localStorage.getItem("token");
-    openOverlay();
+    
     try {
         const response = await fetch(`/booking/edit_booking`, {
             method: "POST",
@@ -139,7 +139,7 @@ async function cancelBtnClick(bookingId) {
     }
 }
 window.cancelBtnClick = cancelBtnClick;
-window.alterBooking = alterBooking;
+window.editBtnClick = editBtnClick;
 function shareBtnClick() {
     const token = localStorage.getItem("token");
     

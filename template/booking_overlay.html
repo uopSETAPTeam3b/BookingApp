@@ -1,10 +1,10 @@
 <div id="bookingOverlay" class="overlay">
     <div class="overlay-content">
-      <button onclick="closeOverlay()">Close</button>
+      <h2 id="booking_id"></h1>
       <table id="booking-table">
         <thead>
           <tr>
-            <th>Room / Time</th>
+            <th>Room   | Time</th>
             <!-- JS will append time slots -->
           </tr>
         </thead>
@@ -12,7 +12,9 @@
           <!-- JS will insert room rows here -->
         </tbody>
       </table>
+      <button id="closeOverlayBtn">Close</button>
+      <button id="confirmEditBtn">Confirm</button>
     </div>
 </div>
-<link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="/booking_overlay.css">
 <script src="/booking_overlay.js"></script>

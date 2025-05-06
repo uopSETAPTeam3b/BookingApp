@@ -22,7 +22,7 @@ class BookingManager(API):
         self.router.add_api_route("/get_booking", self.get_booking, methods=["POST"], response_model=Booking)
         self.router.add_api_route("/get_rooms", self.get_rooms, methods=["POST"], response_model=list[Room])
         self.router.add_api_route("/get_room", self.get_room, methods=["POST"], response_model=Room)
-
+        self.router.add_api_route("/get_day_bookings", self.get_day_bookings, methods=["GET"], response_model=list[Booking])
     @dataclass
     class BookRoom:
         token: str
@@ -32,11 +32,21 @@ class BookingManager(API):
     @dataclass
     class EditBooking:
         token: str
-        datetime: int
+        dayTime: int
         room_id: int
         duration: int
         old_booking_id: int
 
+    def set_hour_on_same_day(self, unix_timestamp: int, target_hour: int) -> int:
+        # Convert to UTC datetime
+        dt = datetime.utcfromtimestamp(unix_timestamp)
+
+        # Replace the hour, and reset minutes, seconds, microseconds
+        updated_dt = dt.replace(hour=target_hour, minute=0, second=0, microsecond=0)
+
+        # Return as Unix timestamp (seconds)
+        return int(updated_dt.timestamp())
+    
     async def edit_booking(self, newBooking: EditBooking) -> str:
         """ Edits a room booking from a (only) validated user """
         async with DB() as db:
@@ -46,10 +56,11 @@ class BookingManager(API):
             if not oldBooking:
                 raise HTTPException(status_code=404, detail="Booking not found")
             
-            if db.edit_booking(
-                newBooking.old_booking_id, newBooking.room_id, newBooking.datetime, newBooking.duration
+            date_time = self.set_hour_on_same_day(oldBooking.time, newBooking.dayTime)
+            if await db.edit_booking(
+                newBooking.old_booking_id, newBooking.room_id, date_time, newBooking.duration
             ):
-                self.nm.booking_edited(oldBooking, newBooking)
+                #self.nm.booking_edited(oldBooking, newBooking)
                 return "Booking edited successfully"
             else:
                 return "Booking edit failed"
@@ -144,7 +155,41 @@ class BookingManager(API):
     def get_bookings_for_date(self, bookings: GetBookingsForDate) -> list[Booking]:
         """Returns a list of bookings for this date"""
         return []
-       
+    
+    async def get_day_bookings(self, booking_id: int):
+        """Handles a route to get all bookings for the same day as the given booking_id."""
+        async with DB() as db:
+            # Get the date of the booking from booking_id
+            booking_date = await db.get_booking_date(booking_id)
+            if not booking_date:
+                raise HTTPException(status_code=404, detail="Booking not found")
+
+            # Get bookings for that date
+            bookings = await db.get_bookings_by_date(booking_date)
+
+            # Format the bookings as a list of dicts for JSON response
+            booking_list = []
+            for booking in bookings:
+                booked = {
+                    "booking_id": booking.id,
+                    "building_id": booking.building.id,
+                    "room_name": booking.room.name,
+                    "building_name": booking.building.name,
+                    "room_id": booking.room.id,
+                    "start_time": booking.time,
+                    "duration": booking.duration,
+                    "access_code": booking.access_code,
+                    "address_1": booking.building.address_1,
+                    "address_2": booking.building.address_2,
+                    "opening_time": booking.building.opening_time,
+                    "closing_time": booking.building.closing_time
+                }
+                booking_list.append(booked)
+                
+                
+
+            # Return the list of bookings as a JSON response
+            return JSONResponse(content={"bookings": booking_list})
     @dataclass
     class GetBooking:
         token: str

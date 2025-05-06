@@ -29,9 +29,10 @@ class User:
 class Booking:
 
     id: int
-    user: User
     room: Room
     time: int
+    user: Optional[User] = None
+    access_code: Optional[str] = None
     duration: Optional[float] = None
     building: Optional["Building"] = None  
 @dataclass
@@ -117,13 +118,13 @@ class DatabaseManager:
 
         # Fetch university associations
         async with self.conn.execute("""
-            SELECT U.university_name, UU.status 
-            FROM User_University UU
-            JOIN University U ON UU.university_id = U.university_id
-            WHERE UU.user_id = ?
+            SELECT U.university_name 
+            FROM University U
+            JOIN User ON User.university_id = U.university_id
+            WHERE User.user_id = ?
         """, (user_id,)) as cursor:
-            universities = await cursor.fetchall()
-
+            university = await cursor.fetchone()
+        
         return {
             "id": user[0],
             "username": user[1],
@@ -131,9 +132,7 @@ class DatabaseManager:
             "phone_number": user[3],
             "offence_count": user[4],
             "role": user[5],
-            "universities": [
-                {"name": row[0], "status": row[1]} for row in universities
-            ]
+            "university": university[0] if university else None
         }
     async def get_email(self, user_id: int) -> str:
         """ Gets a email from a user """
@@ -148,6 +147,7 @@ class DatabaseManager:
         return "Error. User not found"
     async def edit_booking(self, booking_id: int, room_id: int, start_time: str, duration: int) -> bool:
         """ Edits a booking in the database """
+        
         try:
             await self.conn.execute(
                 """
@@ -269,7 +269,6 @@ class DatabaseManager:
     async def get_user_from_username(self, username: str) -> Optional[User]:
         """Get user by username"""
         username = username.lower()
-        print(username)
         async with self.conn.execute(
             "SELECT user_id, username, email, role FROM User WHERE username = ?",
             (username,)
@@ -372,11 +371,10 @@ class DatabaseManager:
                 user_id = result[6]      # user_id
 
                 # Retrieve User object from user_id
-                user = await self.get_user_from_booking(booking_id)
+                user = await self.get_user(user_id)
 
                 room = await self.get_room(room_id)
-
-                return Booking(booking_id, user, room, start_time)
+                return Booking(booking_id, room, start_time, user )
             return "Booking doesn't exist."
     async def get_rooms(self) -> list[Room]:
         """ Returns a list of all rooms """
@@ -516,7 +514,7 @@ class DatabaseManager:
             "SELECT user_id FROM Authentication WHERE token = ?", (token,)
         ) as cur:
             result = await cur.fetchone()
-            print(result)
+            
             if result is None:
                 return []  # Invalid token or not found
             user_id = result[0]
@@ -552,8 +550,6 @@ class DatabaseManager:
             (user_id,)
         ) as cur:
             results = await cur.fetchall()
-            print("results")
-            print(results)
             bookings = []
 
             for result in results:
@@ -589,7 +585,7 @@ class DatabaseManager:
                     building=building,
                     duration=duration
                 ))
-            print("bookings" + str(len(bookings)) + "user" + user.username + " "+ str(user_id))
+           
             return bookings
 
     async def get_room(self, room_id: int) -> Room:
@@ -611,6 +607,93 @@ class DatabaseManager:
                     building_id=result[2]
                 )
             return "Room not found." 
+    async def get_bookings_by_date(self, booking_date: str) -> list[Booking]:
+        """Gets all bookings for the same day as the given date."""
+        # Get all bookings for that same day
+        async with self.conn.execute(
+            '''
+                SELECT 
+                    b.booking_id, 
+                    b.building_id, 
+                    b.room_id, 
+                    r.room_name,
+                    b.start_time, 
+                    b.duration, 
+                    b.access_code, 
+                    bl.building_name, 
+                    bl.address_1, 
+                    bl.address_2, 
+                    bl.opening_time, 
+                    bl.closing_time
+                FROM 
+                    Booking b
+                JOIN 
+                    Building bl ON b.building_id = bl.building_id
+                JOIN 
+                    Room r ON b.room_id = r.room_id  
+                WHERE 
+                    DATE(datetime(b.start_time, 'unixepoch')) = ?
+                ORDER BY 
+                    b.start_time;
+            ''', (booking_date,)
+        ) as cur:
+            results = await cur.fetchall()
+
+        bookings = []
+        for result in results:
+            booking_id = result[0]
+            building_id = result[1]
+            room_id = result[2]
+            room_name = result[3]
+            start_time = result[4]
+            duration = result[5]
+            access_code = result[6]
+            building_name = result[7]
+            address_1 = result[8]
+            address_2 = result[9]
+            opening_time = result[10]
+            closing_time = result[11]
+
+            room = Room(id=room_id,
+                        name=room_name,
+                        building_id=building_id
+                        )
+            building = Building(
+                id=building_id,
+                name=building_name,
+                address_1=address_1,
+                address_2=address_2,
+                opening_time=opening_time,
+                closing_time=closing_time
+            )
+
+            bookings.append(Booking(
+                id=booking_id,
+                building_id=building_id,
+                user=None,  # Add the user if needed later
+                room=room,
+                time=start_time,
+                building=building,
+                duration=duration
+            ))
+
+        return bookings
+
+
+    async def get_booking_date(self, booking_id: int) -> str:
+        """Gets the date of the given booking ID."""
+        # Get the start time of the given booking
+        async with self.conn.execute(
+            "SELECT start_time FROM Booking WHERE booking_id = ?", (booking_id,)
+        ) as cur:
+            result = await cur.fetchone()
+            if result is None:
+                return None  # Booking not found
+
+            start_time = int(result[0])         # Convert Unix timestamp to a datetime object
+            booking_date = datetime.utcfromtimestamp(start_time).strftime('%Y-%m-%d')
+            return booking_date
+
 
     async def get_room_facilities(self, room_id: int) -> list[str]:
         """ Returns a list of facilities for a room """

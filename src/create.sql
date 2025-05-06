@@ -8,6 +8,7 @@
 
 CREATE TABLE User (
     user_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    university_id INTEGER REFERENCES University(university_id),
     username TEXT NOT NULL,
     password TEXT NOT NULL,
     email TEXT NOT NULL,
@@ -110,16 +111,16 @@ CREATE TABLE User_University (
 INSERT INTO University (university_name, address)
 VALUES ('University of Portsmouth', 'Winston Churchill Ave, Portsmouth PO1 2UP');
 --- insert some sample data into the tables ---
-INSERT INTO User (username, password, email, phone_number, offence_count, warning_type, role)
+INSERT INTO User (username, password, email, phone_number, offence_count, warning_type, role, university_id)
 VALUES 
-('up2211837@myport.ac.uk', '$2b$12$HwfMvmCmyRIh0syYp3cnjeQijB3pwUAgjHKkLdaQzWdQqaY3pCe4m', 'up2211837@myport.ac.uk', '07111111111', 0, 'none', 'user'),
-('up2194051@myport.ac.uk', '$2b$12$HwfMvmCmyRIh0syYp3cnjeQijB3pwUAgjHKkLdaQzWdQqaY3pCe4m', 'up2194051@myport.ac.uk', '07222222222', 0, 'none', 'user'),
-('up2195798@myport.ac.uk', '$2b$12$HwfMvmCmyRIh0syYp3cnjeQijB3pwUAgjHKkLdaQzWdQqaY3pCe4m', 'up2195798@myport.ac.uk', '07333333333', 0, 'none', 'user'),
-('up2195798@myport.ac.uk', '$2b$12$HwfMvmCmyRIh0syYp3cnjeQijB3pwUAgjHKkLdaQzWdQqaY3pCe4m', 'up2195798@myport.ac.uk', '07635463633', 0, 'none', 'user'),
-('up2245678@myport.ac.uk', '$2b$12$HwfMvmCmyRIh0syYp3cnjeQijB3pwUAgjHKkLdaQzWdQqaY3pCe4m', 'up2245678@myport.ac.uk', '07444444444', 0, 'none', 'user'),
-('up2233199@myport.ac.uk', '$2b$12$HwfMvmCmyRIh0syYp3cnjeQijB3pwUAgjHKkLdaQzWdQqaY3pCe4m', 'up2233199@myport.ac.uk', '07555555555', 0, 'none', 'user'),
-('up2208881@myport.ac.uk', '$2b$12$HwfMvmCmyRIh0syYp3cnjeQijB3pwUAgjHKkLdaQzWdQqaY3pCe4m', 'up2208881@myport.ac.uk', '07666666666', 0, 'none', 'user'),
-('admin@myport.ac.uk', '$2b$12$HwfMvmCmyRIh0syYp3cnjeQijB3pwUAgjHKkLdaQzWdQqaY3pCe4m', 'admin@myport.ac.uk', '07000000000', 0, 'none', 'admin');
+('up2211837@myport.ac.uk', '$2b$12$HwfMvmCmyRIh0syYp3cnjeQijB3pwUAgjHKkLdaQzWdQqaY3pCe4m', 'up2211837@myport.ac.uk', '07111111111', 0, 'none', 'user', 1),
+('up2194051@myport.ac.uk', '$2b$12$HwfMvmCmyRIh0syYp3cnjeQijB3pwUAgjHKkLdaQzWdQqaY3pCe4m', 'up2194051@myport.ac.uk', '07222222222', 0, 'none', 'user', 1),
+('up2195798@myport.ac.uk', '$2b$12$HwfMvmCmyRIh0syYp3cnjeQijB3pwUAgjHKkLdaQzWdQqaY3pCe4m', 'up2195798@myport.ac.uk', '07333333333', 0, 'none', 'user', 1),
+('up2195798@myport.ac.uk', '$2b$12$HwfMvmCmyRIh0syYp3cnjeQijB3pwUAgjHKkLdaQzWdQqaY3pCe4m', 'up2195798@myport.ac.uk', '07635463633', 0, 'none', 'user', 1),
+('up2245678@myport.ac.uk', '$2b$12$HwfMvmCmyRIh0syYp3cnjeQijB3pwUAgjHKkLdaQzWdQqaY3pCe4m', 'up2245678@myport.ac.uk', '07444444444', 0, 'none', 'user', 1),
+('up2233199@myport.ac.uk', '$2b$12$HwfMvmCmyRIh0syYp3cnjeQijB3pwUAgjHKkLdaQzWdQqaY3pCe4m', 'up2233199@myport.ac.uk', '07555555555', 0, 'none', 'user', 1),
+('up2208881@myport.ac.uk', '$2b$12$HwfMvmCmyRIh0syYp3cnjeQijB3pwUAgjHKkLdaQzWdQqaY3pCe4m', 'up2208881@myport.ac.uk', '07666666666', 0, 'none', 'user', 1),
+('admin@myport.ac.uk', '$2b$12$HwfMvmCmyRIh0syYp3cnjeQijB3pwUAgjHKkLdaQzWdQqaY3pCe4m', 'admin@myport.ac.uk', '07000000000', 0, 'none', 'admin', 1);
 
 INSERT INTO EmailVerification (user_id) VALUES
 (1),
@@ -187,9 +188,51 @@ INSERT INTO Room (building_id, room_name, room_type, room_capacity, room_availab
 
 INSERT INTO Booking (building_id, room_id, start_time, duration, access_code)
 VALUES
-(1, 1, 1746084000, 1, 'ABC123'),
-(1, 1, 1746175200, 2, 'DEF456'),
-(1, 1, 1746255000, 1.5, 'GHI789');
+(2, 2, 1746082800, 1, 'A1'),
+(2, 2, 1746090000, 2, 'A2'),
+(2, 2, 1746104400, 1, 'A3'),
+(2, 3, 1746082800, 1, 'B1'),
+(2, 3, 1746090000, 2, 'B2'),
+(2, 3, 1746104400, 1.5, 'B3'),
+(2, 4, 1746090000, 2, 'C1'),
+(2, 4, 1746104400, 1, 'C2'),
+(2, 4, 1746111600, 1.5, 'C3'),
+(2, 5, 1746082800, 1.5, 'D1'),
+(2, 5, 1746093600, 2, 'D2'),
+(2, 5, 1746104400, 1, 'D3'),
+(2, 6, 1746090000, 2, 'E1'),
+(2, 6, 1746104400, 1.5, 'E2'),
+(2, 6, 1746121200, 1, 'E3'),
+(2, 2, 1746174000, 1, 'F1'),
+(2, 2, 1746181200, 2, 'F2'),
+(2, 2, 1746195600, 1.5, 'F3'),
+(2, 3, 1746174000, 1, 'G1'),
+(2, 3, 1746181200, 2, 'G2'),
+(2, 3, 1746195600, 1.5, 'G3'),
+(2, 4, 1746181200, 2, 'H1'),
+(2, 4, 1746192000, 1, 'H2'),
+(2, 4, 1746202800, 1.5, 'H3'),
+(2, 5, 1746174000, 1.5, 'I1'),
+(2, 5, 1746181200, 2, 'I2'),
+(2, 5, 1746195600, 1, 'I3'),
+(2, 6, 1746181200, 2, 'J1'),
+(2, 6, 1746195600, 1.5, 'J2'),
+(2, 6, 1746202800, 1, 'J3'),
+(2, 2, 1746253800, 1, 'K1'),
+(2, 2, 1746261000, 2, 'K2'),
+(2, 2, 1746275400, 1.5, 'K3'),
+(2, 3, 1746257400, 1, 'L1'),
+(2, 3, 1746264600, 2, 'L2'),
+(2, 3, 1746275400, 1.5, 'L3'),
+(2, 4, 1746261000, 2, 'M1'),
+(2, 4, 1746271800, 1, 'M2'),
+(2, 4, 1746275400, 1.5, 'M3'),
+(2, 5, 1746257400, 1.5, 'N1'),
+(2, 5, 1746268200, 2, 'N2'),
+(2, 5, 1746275400, 1, 'N3'),
+(2, 6, 1746264600, 2, 'O1'),
+(2, 6, 1746275400, 1.5, 'O2'),
+(2, 6, 1746287400, 1, 'O3');
 
 
 INSERT INTO User_Booking (user_id, booking_id)
@@ -215,17 +258,6 @@ VALUES
 (7, 1),
 (7, 2),
 (7, 3);
-
-INSERT INTO User_University (user_id, university_id)
-VALUES 
-(1, 1),
-(2, 1),
-(3, 1),
-(4, 1),
-(5, 1),
-(6, 1),
-(7, 1),
-(8, 1);
 
 
 
