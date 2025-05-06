@@ -85,18 +85,18 @@ class DatabaseManager:
                 (user_id,)
             )
             await self.conn.commit()
-            
+
             async with self.conn.execute(
                 "SELECT offence_count FROM User WHERE user_id = ?",
                 (user_id,)
             ) as cursor:
                 result = await cursor.fetchone()
                 return result[0] if result else None
-    
+
         except Exception as e:
             print("Error issuing strike:", e)
             return None
-    
+
     async def get_email(self, user_id: int) -> str:
         """ Gets a email from a user """
         # takes a user_id and returns the email of the user
@@ -108,7 +108,23 @@ class DatabaseManager:
         if result:
             return result[0]  # not result because it is a tuple
         return "Error. User not found"
-
+    async def edit_booking(self, booking_id: int, room_id: int, start_time: str, duration: int) -> bool:
+        """ Edits a booking in the database """
+        try:
+            await self.conn.execute(
+                """
+                UPDATE Booking
+                SET room_id = ?, start_time = ?, duration = ?
+                WHERE booking_id = ?
+                """,
+                (room_id, start_time, duration, booking_id)
+            )
+            await self.conn.commit()
+            return True
+        except Exception as e:
+            print("Error editing booking:", e)
+            return False
+        
     async def delete_token(self, token: str) -> bool:
         """Delete the token from the database."""
         try:

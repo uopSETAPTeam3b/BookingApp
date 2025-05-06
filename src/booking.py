@@ -16,6 +16,7 @@ class BookingManager(API):
         self.router.add_api_route("/book", self.book_room, methods=["POST"])
         self.router.add_api_route("/cancel", self.cancel_booking, methods=["POST"])
         self.router.add_api_route("/share", self.share_room, methods=["POST"])
+        self.router.add_api_route("/edit_booking", self.edit_booking, methods=["POST"])
         self.router.add_api_route("/get_bookings", self.get_bookings, methods=["POST"], response_model=list[Booking])
         self.router.add_api_route("/get_bookings_for_date", self.get_bookings_for_date, methods=["POST"], response_model=list[Booking])
         self.router.add_api_route("/get_booking", self.get_booking, methods=["POST"], response_model=Booking)
@@ -27,7 +28,34 @@ class BookingManager(API):
         token: str
         datetime: int
         room_id: int
+        duration: int
+    @dataclass
+    class EditBooking:
+        token: str
+        datetime: int
+        room_id: int
+        duration: int
+        old_booking_id: int
 
+    async def edit_booking(self, newBooking: EditBooking) -> str:
+        """ Edits a room booking from a (only) validated user """
+        async with DB() as db:
+            if not await db.verify_token(newBooking.token):
+                raise HTTPException(status_code=404, detail="User not found")
+            oldBooking = await db.get_booking(newBooking.old_booking_id)
+            if not oldBooking:
+                raise HTTPException(status_code=404, detail="Booking not found")
+            
+            if db.edit_booking(
+                newBooking.old_booking_id, newBooking.room_id, newBooking.datetime, newBooking.duration
+            ):
+                self.nm.booking_edited(oldBooking, newBooking)
+                return "Booking edited successfully"
+            else:
+                return "Booking edit failed"
+            
+
+        
     async def book_room(self, booking: BookRoom) -> str:
         """ Books a room from a (only) validated user """
         async with DB() as db:

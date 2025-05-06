@@ -245,6 +245,33 @@ h2 {
   color: var(--text-color);
 }
 
+#bookingOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: none; /* Hidden by default */
+  justify-content: center; /* Center horizontally */
+  align-items: center;     /* Center vertically */
+  z-index: 9999;
+}
+
+#bookingOverlay.active {
+  display: flex;
+}
+
+.overlay-content {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  max-height: 80vh;
+  max-width: 90vw;
+  overflow: auto;
+}
+
+
 @media (max-width: 600px) {
   .modal-content {
     width: 90%;

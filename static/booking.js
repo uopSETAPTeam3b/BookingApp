@@ -73,14 +73,46 @@ function displayBookings(bookings) {
         <strong>Start Time:</strong> ${startTime} <br>
         <strong>Duration:</strong> ${booking.duration ?? 'N/A'} hour(s)<br>
         <button class="btn btn-primary" onclick="cancelBtnClick(${booking.id})">cancel</button>
+        <button class="btn btn-secondary" onclick="alterBooking(${booking.id}, ${Math.floor(Date.now() / 1000) + 3600},1, ${booking.room_id})">Edit</button>
       `;
         
       bookingsList.appendChild(listItem);
     });
   }
-function editBtnClick() {
+function editBtnClick(bookingId) {
     const token = localStorage.getItem("token");
+
     
+}
+
+async function alterBooking(bookingId, newTime,newDuration, newRoomId) {
+    const token = localStorage.getItem("token");
+    openOverlay();
+    try {
+        const response = await fetch(`/booking/edit_booking`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                token: token,
+                datetime: newTime,
+                room_id: newRoomId,
+                duration: newDuration,
+                old_booking_id: bookingId
+            })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || "Failed to edit booking");
+        }
+
+        const result = await response.json();
+        console.log("Booking edited successfully:", result);
+        fetchBookings(token);  
+    } catch (error) {
+        console.error("Error editing booking:", error);
+        alert("Failed to edit booking: " + error.message);
+    }
 }
 
 async function cancelBtnClick(bookingId) {
@@ -107,6 +139,7 @@ async function cancelBtnClick(bookingId) {
     }
 }
 window.cancelBtnClick = cancelBtnClick;
+window.alterBooking = alterBooking;
 function shareBtnClick() {
     const token = localStorage.getItem("token");
     

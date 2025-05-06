@@ -91,7 +91,22 @@ CREATE TABLE Room_Facility (
 );
 
 
+-- University Table
+CREATE TABLE University (
+    university_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    university_name TEXT NOT NULL,
+    address TEXT
+);
 
+-- Linking Table between User and University
+CREATE TABLE User_University (
+    user_id INTEGER NOT NULL REFERENCES User(user_id),
+    university_id INTEGER NOT NULL REFERENCES University(university_id),
+    PRIMARY KEY (user_id, university_id)
+);
+
+INSERT INTO University (university_name, address)
+VALUES ('University of Portsmouth', 'Winston Churchill Ave, Portsmouth PO1 2UP');
 --- insert some sample data into the tables ---
 INSERT INTO User (username, password, email, phone_number, offence_count, warning_type, role)
 VALUES 
@@ -101,7 +116,8 @@ VALUES
 ('up2195798@myport.ac.uk', '$2b$12$HwfMvmCmyRIh0syYp3cnjeQijB3pwUAgjHKkLdaQzWdQqaY3pCe4m', 'up2195798@myport.ac.uk', '07635463633', 0, 'none', 'user'),
 ('up2245678@myport.ac.uk', '$2b$12$HwfMvmCmyRIh0syYp3cnjeQijB3pwUAgjHKkLdaQzWdQqaY3pCe4m', 'up2245678@myport.ac.uk', '07444444444', 0, 'none', 'user'),
 ('up2233199@myport.ac.uk', '$2b$12$HwfMvmCmyRIh0syYp3cnjeQijB3pwUAgjHKkLdaQzWdQqaY3pCe4m', 'up2233199@myport.ac.uk', '07555555555', 0, 'none', 'user'),
-('up2208881@myport.ac.uk', '$2b$12$HwfMvmCmyRIh0syYp3cnjeQijB3pwUAgjHKkLdaQzWdQqaY3pCe4m', 'up2208881@myport.ac.uk', '07666666666', 0, 'none', 'user');
+('up2208881@myport.ac.uk', '$2b$12$HwfMvmCmyRIh0syYp3cnjeQijB3pwUAgjHKkLdaQzWdQqaY3pCe4m', 'up2208881@myport.ac.uk', '07666666666', 0, 'none', 'user'),
+('admin@myport.ac.uk', '$2b$12$HwfMvmCmyRIh0syYp3cnjeQijB3pwUAgjHKkLdaQzWdQqaY3pCe4m', 'admin@myport.ac.uk', '07000000000', 0, 'none', 'admin');
 
 INSERT INTO EmailVerification (user_id) VALUES
 (1),
@@ -198,6 +214,16 @@ VALUES
 (7, 2),
 (7, 3);
 
+INSERT INTO User_University (user_id, university_id)
+VALUES 
+(1, 1),
+(2, 1),
+(3, 1),
+(4, 1),
+(5, 1),
+(6, 1),
+(7, 1),
+(8, 1);
 
 
 
