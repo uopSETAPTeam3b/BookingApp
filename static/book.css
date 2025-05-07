@@ -1,4 +1,49 @@
-.hidden {
-    display: none;
+#bookings-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: Arial, sans-serif;
+    margin-top: 20px;
+    table-layout: fixed;
 }
 
+#bookings-table th,
+#bookings-table td {
+    border: 1px solid #ccc;
+    padding: 10px;
+    text-align: center;
+    word-wrap: break-word;
+}
+
+#bookings-table th {
+    background-color: #f4f4f4;
+    font-weight: bold;
+}
+
+#bookings-table td {
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+#bookings-table td:hover {
+    filter: brightness(0.95);
+}
+#bookings-table td.unusable {
+    color: #888;
+    font-style: italic;
+}
+
+#bookings-table td.booked {
+    background-color: #d3d3d3 !important;
+    cursor: not-allowed;
+}
+
+#bookings-table td.available {
+    background-color: #90ee90;
+}
+
+#bookings-table td.selected {
+    background-color: rgb(231, 101, 101) !important;
+}
+.hidden {
+    display: none !important;
+  }

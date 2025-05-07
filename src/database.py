@@ -13,6 +13,7 @@ class Room:
     name:str
     building_id: int
     type: Optional[str] = None
+    capacity: Optional[int] = None
 
 @dataclass
 class LoggedInUser:
@@ -382,7 +383,7 @@ class DatabaseManager:
         # Query to get all rooms from the Room table
         async with self.conn.execute(
             '''
-            SELECT room_id, room_name, building_id, room_type FROM Room;
+            SELECT room_id, room_name, building_id, room_type, room_capacity FROM Room;
             '''
         ) as cur:
 
@@ -393,9 +394,9 @@ class DatabaseManager:
                 room_name = result[1]
                 building_id = result[2]
                 room_type = result[3] if len(result) > 3 else None  # Check if room_type exists
-
+                room_capacity = result[4] if len(result) > 4 else None  # Check if room_capacity exists
                 # Create Room object and append to the list
-                rooms.append(Room(id=room_id, name=room_name, building_id=building_id, type=room_type))
+                rooms.append(Room(id=room_id, name=room_name, building_id=building_id, type=room_type, capacity=room_capacity))
             return rooms
 
     async def get_buildings(self) -> list[Building]:

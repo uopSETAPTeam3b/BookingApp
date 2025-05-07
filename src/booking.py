@@ -18,7 +18,7 @@ class BookingManager(API):
         self.router.add_api_route("/share", self.share_room, methods=["POST"])
         self.router.add_api_route("/edit_booking", self.edit_booking, methods=["POST"])
         self.router.add_api_route("/get_bookings", self.get_bookings, methods=["POST"], response_model=list[Booking])
-        self.router.add_api_route("/get_bookings_for_date", self.get_bookings_for_date, methods=["POST"], response_model=list[Booking])
+        self.router.add_api_route("/get_bookings_for_date", self.get_bookings_for_date, methods=["GET"], response_model=list[Booking])
         self.router.add_api_route("/get_booking", self.get_booking, methods=["POST"], response_model=Booking)
         self.router.add_api_route("/get_rooms", self.get_rooms, methods=["POST"], response_model=list[Room])
         self.router.add_api_route("/get_room", self.get_room, methods=["POST"], response_model=Room)
@@ -152,8 +152,8 @@ class BookingManager(API):
     class BookingRequest:
         dateTime: int  # Ensure this matches the incoming data
 
-    async def get_bookings_for_date(self, booking_request: BookingRequest):
-        dateTime = booking_request.dateTime
+    async def get_bookings_for_date(self, dateTime:int):
+        
         print(f"Received dateTime: {dateTime}")
         """Returns a list of bookings for the given date"""
         async with DB() as db:

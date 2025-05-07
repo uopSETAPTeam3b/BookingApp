@@ -29,15 +29,9 @@ export function applyFilters(rooms, bookings, building_id) {
 let filterbutton = document.querySelector("button#expand-filter");
 filterbutton.addEventListener("click", () => {
     const filterbox = document.querySelector("section#filter");
-    const fromSlider = document.getElementById("fromToRange");
 
     const nowHidden = filterbox.classList.toggle("hidden");
 
-    // Reset 'From' when filter opens
-    if (!nowHidden) {
-        fromSlider.value = -1;
-        document.getElementById('fromToDisplay').innerText = "Select Time";
-    }
 });
 
 export function updateLengthDisplay(value) {

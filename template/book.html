@@ -4,11 +4,17 @@
 <link rel="stylesheet" href="/book.css">
 <link rel="stylesheet" href="/darkmode.css">
 <link rel="stylesheet" href="/nav.css">
+<style href="book.css"></style>
 <button id="theme-switch" title="Toggle Theme">
     <img src="/light_mode.svg" alt="Light Mode" class="theme-icon light-icon">
     <img src="/dark_mode.svg" alt="Dark Mode" class="theme-icon dark-icon">
 </button>
-
+<div>
+    <label for="buildingSelect">Building:</label>
+    <select id="buildingSelect" name="buildingSelect">
+        <option value="Any">Any</option>
+    </select>
+</div>
 <button id="expand-filter">Filters</button>
 <section id="filter" class="hidden">
     <div>
@@ -18,19 +24,39 @@
     </div>
     <div>
         <label for="fromToRange">From (Hour of Day):</label>
-        <input type="range" id="fromToRange" name="fromToRange" min="0" max="23" value="-1">
-        <span id="fromToDisplay">12:00</span>
+        <input type="range" id="fromRange" name="fromToRange" min="0" max="23" value="0">
+        <span id="fromDisplay">00:00</span>
     </div>
     <div>
-        <label for="buildingSelect">Building:</label>
-        <select id="buildingSelect" name="buildingSelect">
-            <option value="">Any</option>
+        <label for="fromToRange">To (Hour of Day):</label>
+        <input type="range" id="toRange" name="fromToRange" min="0" max="23" value="24">
+        <span id="toDisplay">24:00</span>
+    </div>
+    <div>
+        <label for="roomTypeSelect">Room Type:</label>
+        <select id="roomTypeSelect" name="roomTypeSelect">
+            <option value="any">Any</option>
+            <option value="study room">Study Room</option>
+            <option value="lecture room">Lecture Room</option>
+            <option value="computing room">Computing Room</option>
+            <option value="lab">Lab</option>
         </select>
+    </div>
+    
+    <div>
+        <label for ="facilities">Facilities:</label>
+        <select id="facilities" name="facilities">
+            <option value="any">Any</option>
+        </select>
+    </div>
+    <div>
+        <label for="capacityRange">Capacity:</label>
+        <input type="range" id="capacityRange" name="capacityRange" min="1" max="1000" value="1">
+        <span id="capacityDisplay">1</span>
     </div>
 </section>
 <button id="pre"><-</button>
 <input type="date" value="" id="date">
-<p> no bookings for the current date, if you can change so we can select old dates u can see how it works</p>
 <button id="next">-></button>
 <button id="book">Book</button>
 

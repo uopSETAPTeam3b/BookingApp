@@ -1,5 +1,5 @@
-import {applyFilters, initFilters} from "./filter.js";
-
+let previousBuilding = null;
+let selectedSlots = []
 // Setup Date
 let date = document.querySelector("#date");
 date.valueAsDate = new Date();
@@ -40,6 +40,9 @@ function getSelectedBookings() {
 }
 
 let book = document.querySelector("#book");
+
+
+
 book.addEventListener("click", () => {
     let sel = getSelectedBookings();
     for (let booking of sel) {
@@ -83,7 +86,7 @@ async function fetchRoomsAndBuildings() {
 }
 function populateBuildingDropdown(buildings) {
     const buildingSelect = document.getElementById("buildingSelect");
-    buildingSelect.innerHTML = '<option value="">Select a Building</option>';
+    buildingSelect.innerHTML = '<option value="Any">Any</option>';
     console.log(buildings)
     buildings.forEach(building => {
         const option = document.createElement("option");
@@ -94,66 +97,209 @@ function populateBuildingDropdown(buildings) {
 }
 
 export function renderBookingTable(bookings, rooms, buildings, selectedDate) {
-    let table = document.getElementById("bookings-table")
+    let table = document.getElementById("bookings-table");
     let buildingSelector = document.getElementById("buildingSelect");
     let buildingName = buildingSelector.options[buildingSelector.selectedIndex].text;
     table.innerHTML = '';
-    if (buildingName === "Select a Building") {
-        let noBuilding = document.createElement("tr")
-        let noBuildingText = document.createElement("td")
-        noBuildingText.colSpan = 25
-        noBuildingText.textContent = "Please select a building"
-        noBuilding.appendChild(noBuildingText)
-        table.appendChild(noBuilding)
-        return
-    }
-    let building = buildings.find(b => b.name === buildingName)
-    // Place the time headings onto the table
-    let header = document.createElement("tr")
-    let room_header = document.createElement("th")
-    room_header.textContent = "Room/Time"
-    header.appendChild(room_header)
-    for (let i = parseInt(building.opening_time.split(",")[0]); i < parseInt(building.closing_time.split(",")[0]); i++) {
-        let time = document.createElement("th")
-        time.textContent = `${i.toString()}:00`
-        header.appendChild(time)
-    }
-    table.appendChild(header)
-    console.log("bookings filter", bookings)
-    let _rooms = applyFilters(rooms, bookings.bookings, building.id)
-    // Place the rooms and the checkboxes in the table
-    for (let room of _rooms) {
-        let row = document.createElement("tr")
-        let room_name = document.createElement("th")
-        room_name.textContent = room.name
-        row.appendChild(room_name)
-        for (let i = parseInt(building.opening_time.split(",")[0]); i < parseInt(building.closing_time.split(",")[0]); i++) {
-            let booking = document.createElement("td")
-            let checkbox = document.createElement("input")
-            checkbox.type = "checkbox"
-            checkbox.checked = false
-            checkbox.disabled = false
-            checkbox.setAttribute("time", i)
-            checkbox.setAttribute("room", parseInt(room.id));
-            let timeSlotStart = getTimestampForTimeOfDay(selectedDate, i);
-            if (!bookings.details) {
-                let findBooking = bookings.bookings.find(booking => 
-                    booking.room_id === room.id && isTimeSlotBooked(booking, timeSlotStart)
-                );
-                if (findBooking) {
-                    checkbox.checked = true;
-                    checkbox.disabled = true;
-                }
-            }
-            
-            
-            booking.appendChild(checkbox);
-            row.appendChild(booking)
-        }
-        table.appendChild(row)
+
+    let building;
+    if (buildingName === "Any") {
+        building = {
+            name: "Any",
+            opening_time: "00,00",
+            closing_time: "24,00",
+            id: "any"
+        };
+        
+    } else {
+        building = buildings.find(b => b.name === buildingName);
     }
 
+    if (!building) {
+        console.error("Building not found");
+        return;
+    }
+
+    const from = document.getElementById("fromRange");
+    const to = document.getElementById("toRange");
+    const length = parseInt(document.getElementById("lengthRange").value);
+    from.min = parseInt(building.opening_time.split(",")[0]);
+    from.max = parseInt(building.closing_time.split(",")[0]);
+    to.min = parseInt(building.opening_time.split(",")[0]);
+    to.max = parseInt(building.closing_time.split(",")[0]);
+    console.log("building name", building.name, "previous", previousBuilding)
+    if (previousBuilding !== building.name) {
+        console.log("Setting from and to values");
+        from.value = parseInt(building.opening_time.split(",")[0]);
+        to.value = parseInt(building.closing_time.split(",")[0]);
+    }
+    previousBuilding = building.name;
+    const maxCapacity = Math.max(...rooms.map(room => room.capacity));
+    const capacity = document.getElementById("capacityRange");
+    capacity.max = maxCapacity;
+    updateFilterDisplay();
+    // Table header
+    let header = document.createElement("tr");
+    let room_header = document.createElement("th");
+    room_header.textContent = "Room/Time";
+    header.appendChild(room_header);
+    for (let i = parseInt(building.opening_time.split(",")[0]); i < parseInt(building.closing_time.split(",")[0]); i++) {
+        if (applyFiltersCol(i)) continue;
+        let time = document.createElement("th");
+        time.textContent = `${i.toString().padStart(2, '0')}:00`;
+        header.appendChild(time);
+    }
+    table.appendChild(header);
+
+    for (let room of rooms) {
+        if ((room.building_id !== building.id && building.name !== "Any") || applyFilters(room)) continue;
+        const currentBuilding = buildings.find(b => b.id === room.building_id);
+        let row = document.createElement("tr");
+        let room_name = document.createElement("th");
+        room_name.innerHTML = `
+          <div style="font-size: 0.85em; line-height: 1.2;">
+            <strong>${room.name}</strong><br>
+            <span style="color: #555;">${room.type.split(" ")[0]}</span><br>
+            <span style="font-size: 0.9em; color: #555;">${currentBuilding.name}</span>
+            <span style="font-size: 0.9em; color: #777;">(${room.capacity})</span>
+          </div>
+        `;
+        row.appendChild(room_name);
+
+        const availabilityMap = [];
+        const cellMap = [];
+
+        // First Pass – build availability map
+        for (let i = parseInt(building.opening_time.split(",")[0]); i < parseInt(building.closing_time.split(",")[0]); i++) {
+            if (applyFiltersCol(i, room)) continue;
+
+            const cell = document.createElement("td");
+            let timeSlotStart = getTimestampForTimeOfDay(selectedDate, i);
+            let slotBuilding = buildings.find(b => b.id === room.building_id);
+
+            if (i < parseInt(slotBuilding.opening_time.split(",")[0]) || i >= parseInt(slotBuilding.closing_time.split(",")[0])) {
+                // Closed
+                cell.classList.add("closed");
+                cell.style.backgroundColor = "grey";
+                cell.style.pointerEvents = "none";
+                cell.dataset.booked = "false";
+                availabilityMap.push(false);
+            } else {
+                // Check if booked
+                let isBooked = false;
+                if (!bookings.details) {
+                    let booking = bookings.bookings.find(booking =>
+                        booking.room_id === room.id && isTimeSlotBooked(booking, timeSlotStart)
+                    );
+                    if (booking) {
+                        isBooked = true;
+                    }
+                }
+                availabilityMap.push(!isBooked);
+            }
+
+            cell.dataset.time = i;
+            cell.dataset.roomId = room.id;
+            cellMap.push(cell);
+        }
+
+        // Second Pass – mark available groups
+        const validIndexes = new Set();
+        let streakStart = null;
+
+        for (let i = 0; i <= availabilityMap.length; i++) {
+            if (availabilityMap[i]) {
+                if (streakStart === null) streakStart = i;
+            } else {
+                if (streakStart !== null && (i - streakStart) >= length) {
+                    for (let j = streakStart; j < i; j++) validIndexes.add(j);
+                }
+                streakStart = null;
+            }
+        }
+
+        // Final Pass – fill cell content
+        for (let i = 0; i < cellMap.length; i++) {
+            const cell = cellMap[i];
+            if (availabilityMap[i]) {
+                if (validIndexes.has(i)) {
+                    cell.style.backgroundColor = "lightblue";
+                    cell.textContent = "Book";
+                    cell.classList.add("available");
+                    cell.dataset.booked = "false";
+                    cell.addEventListener("click", () => {
+                        if (cell.dataset.booked === "true") return;
+
+                        const roomId = cell.dataset.roomId;
+                        const time = cell.dataset.time;
+                        const index = selectedSlots.findIndex(slot => slot.roomId === roomId && slot.time === time);
+
+                        if (index === -1) {
+                            cell.classList.remove("available");
+                            cell.classList.add("selected");
+                            cell.textContent = "✔️";
+                            selectedSlots.push({ roomId, time });
+                        } else {
+                            cell.classList.remove("selected");
+                            cell.classList.add("available");
+                            cell.textContent = "Book";
+                            selectedSlots.splice(index, 1);
+                        }
+                    });
+                } else {
+                    // Not part of a valid streak
+                    cell.classList.add("unusable");
+                    cell.style.backgroundColor = "#ddd";
+                    cell.style.pointerEvents = "none";
+                    cell.textContent = "Filtered";
+                    cell.dataset.booked = "false";
+                }
+            }
+            row.appendChild(cell);
+        }
+
+        table.appendChild(row);
+    }
 }
+
+function updateFilterDisplay() {
+    const { fromValue, toValue, lengthValue, capacityValue } = getFilterValues();
+    const fromDisplay = document.getElementById("fromDisplay");
+    fromDisplay.innerText = fromValue + ":00";
+    const toDisplay = document.getElementById("toDisplay");
+    toDisplay.innerText = toValue + ":00";
+    const lengthDisplay = document.getElementById("lengthDisplay");
+    lengthDisplay.innerText = lengthValue + " Hour" + (lengthValue > 1 ? "s" : "");
+    const capacityDisplay = document.getElementById("capacityDisplay");
+    capacityDisplay.innerText = capacityValue + " People" + (capacityValue > 1 ? "s" : "");
+    
+}
+
+function getFilterValues() {
+    const fromValue = document.getElementById("fromRange").value;
+    const toValue = document.getElementById("toRange").value;
+    const lengthValue = document.getElementById("lengthRange").value;
+    const capacityValue = document.getElementById("capacityRange").value;
+    const roomTypeValue = document.getElementById("roomTypeSelect").value;
+    return { fromValue, toValue, lengthValue , capacityValue, roomTypeValue};
+}
+function applyFiltersCol(slot){
+    const { fromValue, toValue, lengthValue, capacityValue, roomTypeValue} = getFilterValues();
+    if (slot < fromValue || slot > toValue ) {
+        return true;
+    }
+    return false;
+}
+function applyFilters(room){
+    const { fromValue, toValue, lengthValue, capacityValue, roomTypeValue} = getFilterValues();
+    if ((roomTypeValue !== "any" && room.type !== roomTypeValue) || room.capacity < capacityValue) {
+        
+        return true; // Should be filtered
+    }
+    return false;
+
+}
+
 function getTimestampForTimeOfDay(dateUnixTimestamp, hours) {
     // Convert the Unix timestamp to a Date object
     const date = new Date(dateUnixTimestamp * 1000);  // Convert to milliseconds
@@ -165,7 +311,7 @@ function getTimestampForTimeOfDay(dateUnixTimestamp, hours) {
     return Math.floor(date.getTime() / 1000);
 }
 function isTimeSlotBooked(booking, timeSlot, slotDurationInSeconds = 3600) {
-    // Convert booking start and end times to milliseconds
+
     
     const bookingStartTime = booking.start_time * 1000;
     const bookingEndTime = (booking.start_time + booking.duration * 3600) * 1000;
@@ -199,19 +345,11 @@ export async function updateBookingTable(){
     let dateSelector = document.getElementById("date"); 
     let selectedDateStr = dateSelector.value; // format: "YYYY-MM-DD"
     let useableDate = new Date(selectedDateStr);
-
+    
     // Convert to Unix timestamp (in seconds)
     let selectedDate = parseInt(Math.floor(useableDate.getTime() / 1000));
     // Get bookings for current date
-    response = await fetch("/booking/get_bookings_for_date", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-            dateTime: selectedDate 
-        })
-    })
+    response = await fetch(`/booking/get_bookings_for_date?dateTime=${selectedDate}`)
 
     let bookings = await response.json()
     console.log("Bookings:", bookings)
@@ -225,12 +363,42 @@ document.addEventListener('DOMContentLoaded', () => {
     buildingSelector.addEventListener("change", () => {
         let selectedBuilding = buildingSelector.value;
         console.log("Selected building:", selectedBuilding);
-        updateBookingTable(selectedBuilding).then(() => {
+        updateBookingTable().then(() => {
             //initFilters()
         });
     });
     updateBookingTable().then(() => {
         //initFilters()
+    });
+    const fromSlider = document.getElementById("fromRange");
+    const toSlider = document.getElementById("toRange");
+    const lengthSlider = document.getElementById("lengthRange");
+    const capacitySlider = document.getElementById("capacityRange");
+    const roomTypeSelect = document.getElementById("roomTypeSelect");
+    fromSlider.addEventListener("input", () => {
+        const fromValue = fromSlider.value;
+        document.getElementById("fromDisplay").innerText = fromValue + ":00";
+        updateBookingTable();
+    });
+    toSlider.addEventListener("input", () => {
+        const toValue = toSlider.value;
+        document.getElementById("toDisplay").innerText = toValue + ":00";
+        updateBookingTable();
+    });
+    lengthSlider.addEventListener("input", () => {
+        const lengthValue = lengthSlider.value;
+        document.getElementById("lengthDisplay").innerText = lengthValue + " Hour" + (lengthValue > 1 ? "s" : "");
+        updateBookingTable();
+    });
+    capacitySlider.addEventListener("input", () => {
+        const capacityValue = capacitySlider.value;
+        document.getElementById("capacityDisplay").innerText = capacityValue + " People" + (capacityValue > 1 ? "s" : "");
+        updateBookingTable();
+    });
+    
+    roomTypeSelect.addEventListener("change", () => {
+        const roomTypeValue = roomTypeSelect.value;
+        updateBookingTable();
     });
     fetchRoomsAndBuildings()
 });
