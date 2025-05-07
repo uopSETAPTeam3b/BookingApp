@@ -2,9 +2,9 @@
 
 # -- Project information
 
-project = 'Lumache'
-copyright = '2021, Graziella'
-author = 'Graziella'
+project = 'BookingApp'
+copyright = '2025, UopSetabTeam3b'
+author = 'UOPSetapTeam3b'
 
 release = '0.1'
 version = '0.1.0'
