@@ -20,3 +20,10 @@ This project aims to provide a minimal yet functional booking system. The scope 
 - Frontend: HTML and JS 
 - Backend: Python with FastAPI
 - Database: Sqlite
+
+Contents
+--------
+
+.. toctree::
+
+   usage
