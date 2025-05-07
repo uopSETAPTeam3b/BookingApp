@@ -148,13 +148,42 @@ class BookingManager(API):
             # Convert each Booking object to a dict
             booking_dicts = [asdict(b) for b in all_bookings]
             return JSONResponse(content={"bookings": booking_dicts}, status_code=200)
-
     @dataclass
-    class GetBookingsForDate:
-        date: str
-    def get_bookings_for_date(self, bookings: GetBookingsForDate) -> list[Booking]:
-        """Returns a list of bookings for this date"""
-        return []
+    class BookingRequest:
+        dateTime: int  # Ensure this matches the incoming data
+
+    async def get_bookings_for_date(self, booking_request: BookingRequest):
+        dateTime = booking_request.dateTime
+        print(f"Received dateTime: {dateTime}")
+        """Returns a list of bookings for the given date"""
+        async with DB() as db:
+            # Convert the Unix timestamp to a date (assuming it's in UTC)
+            date_obj = datetime.utcfromtimestamp(dateTime)
+            # Use this date to get bookings for that specific day
+            bookings = await db.get_bookings_by_date(date_obj.date())
+
+            if not bookings:
+                raise HTTPException(status_code=404, detail="No bookings found for this date")
+
+            booking_list = []
+            for booking in bookings:
+                booked = {
+                    "booking_id": booking.id,
+                    "building_id": booking.building.id,
+                    "room_name": booking.room.name,
+                    "building_name": booking.building.name,
+                    "room_id": booking.room.id,
+                    "start_time": booking.time,
+                    "duration": booking.duration,
+                    "access_code": booking.access_code,
+                    "address_1": booking.building.address_1,
+                    "address_2": booking.building.address_2,
+                    "opening_time": booking.building.opening_time,
+                    "closing_time": booking.building.closing_time
+                }
+                booking_list.append(booked)
+
+            return JSONResponse(content={"bookings": booking_list})
     
     async def get_day_bookings(self, booking_id: int):
         """Handles a route to get all bookings for the same day as the given booking_id."""

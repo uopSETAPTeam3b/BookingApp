@@ -1,19 +1,5 @@
 import {applyFilters, initFilters} from "./filter.js";
 
-let bookings = []
-let rooms = ["1.0", "2.0", "3.0", "4.0", "5.0", "6.0", "7.0", "8.0", "9.0"]
-let roomids = {
-    1: "1.0",
-    2: "2.0",
-    3: "3.0",
-    4: "4.0",
-    5: "5.0",
-    6: "6.0",
-    7: "7.0",
-    8: "8.0",
-    9: "9.0"
-}
-
 // Setup Date
 let date = document.querySelector("#date");
 date.valueAsDate = new Date();
@@ -107,57 +93,89 @@ function populateBuildingDropdown(buildings) {
     });
 }
 
-export function renderBookingTable() {
+export function renderBookingTable(bookings, rooms, buildings, selectedDate) {
     let table = document.getElementById("bookings-table")
-
+    let buildingSelector = document.getElementById("buildingSelect");
+    let buildingName = buildingSelector.options[buildingSelector.selectedIndex].text;
     table.innerHTML = '';
-
+    if (buildingName === "Select a Building") {
+        let noBuilding = document.createElement("tr")
+        let noBuildingText = document.createElement("td")
+        noBuildingText.colSpan = 25
+        noBuildingText.textContent = "Please select a building"
+        noBuilding.appendChild(noBuildingText)
+        table.appendChild(noBuilding)
+        return
+    }
+    let building = buildings.find(b => b.name === buildingName)
     // Place the time headings onto the table
     let header = document.createElement("tr")
     let room_header = document.createElement("th")
     room_header.textContent = "Room/Time"
     header.appendChild(room_header)
-    for (let i = 0; i < 24; i++) {
+    for (let i = parseInt(building.opening_time.split(",")[0]); i < parseInt(building.closing_time.split(",")[0]); i++) {
         let time = document.createElement("th")
         time.textContent = `${i.toString()}:00`
         header.appendChild(time)
     }
     table.appendChild(header)
-
-    let _rooms = applyFilters(rooms, bookings)
-
+    console.log("bookings filter", bookings)
+    let _rooms = applyFilters(rooms, bookings.bookings, building.id)
     // Place the rooms and the checkboxes in the table
     for (let room of _rooms) {
         let row = document.createElement("tr")
         let room_name = document.createElement("th")
-        room_name.textContent = room
+        room_name.textContent = room.name
         row.appendChild(room_name)
-        for (let i = 0; i < 24; i++) {
+        for (let i = parseInt(building.opening_time.split(",")[0]); i < parseInt(building.closing_time.split(",")[0]); i++) {
             let booking = document.createElement("td")
             let checkbox = document.createElement("input")
             checkbox.type = "checkbox"
             checkbox.checked = false
             checkbox.disabled = false
             checkbox.setAttribute("time", i)
-            checkbox.setAttribute("room", getIdForRoom(room));
+            checkbox.setAttribute("room", parseInt(room.id));
+            let timeSlotStart = getTimestampForTimeOfDay(selectedDate, i);
+            let findBooking = bookings.bookings.find(booking => 
+                booking.room_id === room.id && isTimeSlotBooked(booking, timeSlotStart)
+            );
+            if (findBooking) {
+                checkbox.checked = true;
+                checkbox.disabled = true;
+            }
             booking.appendChild(checkbox);
             row.appendChild(booking)
         }
         table.appendChild(row)
     }
 
-    // mark booked rooms
-    for (let booking of bookings) {
-        console.log(booking)
-        let checkbox = document.querySelector(`input[type="checkbox"][time="${booking.time}"][room="${getIdForRoom(booking.room)}"]`)
-        if (checkbox === null) continue;
-        checkbox.disabled = true
-        checkbox.checked = true
-    }
-
 }
+function getTimestampForTimeOfDay(dateUnixTimestamp, hours) {
+    // Convert the Unix timestamp to a Date object
+    const date = new Date(dateUnixTimestamp * 1000);  // Convert to milliseconds
 
-async function updateBookingTable() {
+    // Set the time to the specified hour (e.g., 08:00)
+    date.setHours(hours, 0, 0, 0); // Set hours, minutes, seconds, milliseconds
+
+    // Convert the Date object back to a Unix timestamp (in seconds)
+    return Math.floor(date.getTime() / 1000);
+}
+function isTimeSlotBooked(booking, timeSlot, slotDurationInSeconds = 3600) {
+    // Convert booking start and end times to milliseconds
+    
+    const bookingStartTime = booking.start_time * 1000;
+    const bookingEndTime = (booking.start_time + booking.duration * 3600) * 1000;
+  
+    // Round timeSlot down to the nearest slot interval
+    const roundedTimeSlot = Math.floor(timeSlot / slotDurationInSeconds) * slotDurationInSeconds;
+    const timeSlotStart = roundedTimeSlot * 1000;
+    const timeSlotEnd = timeSlotStart + slotDurationInSeconds * 1000;
+  
+    // Check for overlap
+    return timeSlotStart < bookingEndTime && timeSlotEnd > bookingStartTime;
+  }
+
+export async function updateBookingTable(){
 
     let date = document.querySelector("#date");
 
@@ -171,7 +189,10 @@ async function updateBookingTable() {
         })
     })
 
-    bookings = await response.json()
+    let data = await response.json()
+    let rooms = data.rooms
+    let buildings = data.buildings
+    let selectedDate = 1746057600
 
     // Get bookings for current date
     response = await fetch("/booking/get_bookings_for_date", {
@@ -180,26 +201,28 @@ async function updateBookingTable() {
             "Content-Type": "application/json",
         },
         body: JSON.stringify({
-            date: new Date(date.value).toString()
+            dateTime: selectedDate //parseInt(Math.floor(new Date().getTime() / 1000))
         })
     })
 
-    bookings = await response.json()
-    bookings = [
-        ...bookings,
-        { time: 11, room: "3.0" },
-        { time: 12, room: "3.0" },
-        { time: 13, room: "3.0" },
-        { time: 14, room: "3.0" }
-    ]
+    let bookings = await response.json()
+    console.log("Bookings:", bookings)
 
-    renderBookingTable();
+    renderBookingTable(bookings, rooms, buildings, selectedDate);
 }
 
 // Initialise
 document.addEventListener('DOMContentLoaded', () => {
+    const buildingSelector = document.getElementById("buildingSelect");
+    buildingSelector.addEventListener("change", () => {
+        let selectedBuilding = buildingSelector.value;
+        console.log("Selected building:", selectedBuilding);
+        updateBookingTable(selectedBuilding).then(() => {
+            //initFilters()
+        });
+    });
     updateBookingTable().then(() => {
-        initFilters()
+        //initFilters()
     });
     fetchRoomsAndBuildings()
 });
