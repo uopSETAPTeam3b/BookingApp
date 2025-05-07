@@ -163,7 +163,7 @@ class BookingManager(API):
             bookings = await db.get_bookings_by_date(date_obj.date())
 
             if not bookings:
-                raise HTTPException(status_code=404, detail="No bookings found for this date")
+                return JSONResponse(content={"bookings": []}, status_code=200)
 
             booking_list = []
             for booking in bookings:

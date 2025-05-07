@@ -136,13 +136,17 @@ export function renderBookingTable(bookings, rooms, buildings, selectedDate) {
             checkbox.setAttribute("time", i)
             checkbox.setAttribute("room", parseInt(room.id));
             let timeSlotStart = getTimestampForTimeOfDay(selectedDate, i);
-            let findBooking = bookings.bookings.find(booking => 
-                booking.room_id === room.id && isTimeSlotBooked(booking, timeSlotStart)
-            );
-            if (findBooking) {
-                checkbox.checked = true;
-                checkbox.disabled = true;
+            if (!bookings.details) {
+                let findBooking = bookings.bookings.find(booking => 
+                    booking.room_id === room.id && isTimeSlotBooked(booking, timeSlotStart)
+                );
+                if (findBooking) {
+                    checkbox.checked = true;
+                    checkbox.disabled = true;
+                }
             }
+            
+            
             booking.appendChild(checkbox);
             row.appendChild(booking)
         }
@@ -192,8 +196,12 @@ export async function updateBookingTable(){
     let data = await response.json()
     let rooms = data.rooms
     let buildings = data.buildings
-    let selectedDate = 1746057600
+    let dateSelector = document.getElementById("date"); 
+    let selectedDateStr = dateSelector.value; // format: "YYYY-MM-DD"
+    let useableDate = new Date(selectedDateStr);
 
+    // Convert to Unix timestamp (in seconds)
+    let selectedDate = parseInt(Math.floor(useableDate.getTime() / 1000));
     // Get bookings for current date
     response = await fetch("/booking/get_bookings_for_date", {
         method: "POST",
@@ -201,7 +209,7 @@ export async function updateBookingTable(){
             "Content-Type": "application/json",
         },
         body: JSON.stringify({
-            dateTime: selectedDate //parseInt(Math.floor(new Date().getTime() / 1000))
+            dateTime: selectedDate 
         })
     })
 

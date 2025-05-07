@@ -118,7 +118,7 @@ class DatabaseManager:
 
         # Fetch university associations
         async with self.conn.execute("""
-            SELECT U.university_name 
+            SELECT U.university_name, U.university_id
             FROM University U
             JOIN User ON User.university_id = U.university_id
             WHERE User.user_id = ?
@@ -132,7 +132,8 @@ class DatabaseManager:
             "phone_number": user[3],
             "offence_count": user[4],
             "role": user[5],
-            "university": university[0] if university else None
+            "university": university[0] if university else None,
+            "university_id": university[1] if university else None
         }
     async def get_email(self, user_id: int) -> str:
         """ Gets a email from a user """
@@ -678,8 +679,86 @@ class DatabaseManager:
             ))
 
         return bookings
+    
+    async def add_user_to_university(self, user_id: int, university_id: int) -> bool:
+        """ Adds a user to a university """
+        try:
+            # Insert the user_id and university_id into the User_University table
+            await self.conn.execute(
+                '''
+                INSERT INTO User_University (user_id, university_id) 
+                VALUES (?, ?);
+                ''',
+                (user_id, university_id)
+            )
+            await self.conn.commit()
+            return True
+        except Exception as e:
+            print("Error adding user to university:", e)
+            return False
+    async def get_uni_requests(self, university_id: int) -> list[User]:
+        """ Returns a list of all users who have requested to join a university """
+        # Query to get all users who have requested to join the specified university
+        async with self.conn.execute(
+            '''
+            SELECT u.user_id, u.username, u.email, u.role, uu.status
+            FROM User u
+            JOIN User_University uu ON u.user_id = uu.user_id
+            WHERE uu.university_id = ?;
+            ''',
+            (university_id,)
+        ) as cur:
+            results = await cur.fetchall()
+            users = []
+            for result in results:
+                users.append({
+                    "id": result[0],
+                    "username": result[1],
+                    "email": result[2],
+                    "role": result[3],
+                    "status": result[4],
+                })
+            return users
+    async def accept_request(self,user_id: int, university_id:int) -> bool:
+        """ Adds a user to a university """
+        try:
+            # Insert the user_id and university_id into the User_University table
+            await self.conn.execute(
+                '''
+                UPDATE User_University
+                SET status = '1'
+                WHERE user_id = ? AND university_id = ?;
+                ''',
+                (user_id, university_id)
+            )
+            await self.conn.commit()
+            return True
+        except Exception as e:
+            print("Error adding user to university:", e)
+            return False
+        
 
+    async def get_universities(self) -> list[str]:
+        """ Returns a list of all universities """
+        # Query to get all universities from the University table
+        async with self.conn.execute(
+            '''
+            SELECT university_name, university_id FROM University;
+            '''
+        ) as cur:
+            results = await cur.fetchall()
+            universities = []
+            for result in results:
+                university_name = result[0]
+                university_id = result[1]
 
+                # Create University object and append to the list
+                universities.append({
+                    "name": university_name,
+                    "id": university_id
+                })
+            return universities
+    
     async def get_booking_date(self, booking_id: int) -> str:
         """Gets the date of the given booking ID."""
         # Get the start time of the given booking

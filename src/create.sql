@@ -109,7 +109,11 @@ CREATE TABLE User_University (
 );
 
 INSERT INTO University (university_name, address)
-VALUES ('University of Portsmouth', 'Winston Churchill Ave, Portsmouth PO1 2UP');
+VALUES ('University of Portsmouth', 'Winston Churchill Ave, Portsmouth PO1 2UP'),
+('University of Southampton', 'Highfield Campus, University Rd, Southampton SO17 1BJ'),
+('University of Brighton', 'Mithras House, Lewes Rd, Brighton BN2 4AT'),
+('University of Kent', 'Canterbury CT2 7NZ'),
+('University of Sussex', 'Falmer, Brighton BN1 9RH');
 --- insert some sample data into the tables ---
 INSERT INTO User (username, password, email, phone_number, offence_count, warning_type, role, university_id)
 VALUES 
