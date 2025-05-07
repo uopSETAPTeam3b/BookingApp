@@ -1,22 +1,22 @@
-Welcome to Lumache's documentation!
-===================================
+=====================
+Project Overview
+=====================
 
-**Lumache** (/lu'make/) is a Python library for cooks and food lovers
-that creates recipes mixing random ingredients.
-It pulls data from the `Open Food Facts database <https://world.openfoodfacts.org/>`_
-and offers a *simple* and *intuitive* API.
+Booking App
+===========
 
-Check out the :doc:`usage` section for further information, including
-how to :ref:`installation` the project.
+**Project Name:** Booking App
 
-.. note::
+**Description:**  
+The Booking App is a user-friendly platform that allows users to schedule and manage room Bookings. It supports browsing available time slots, booking rooms, and managing existing bookings.
 
-   This project is under active development.
+**Scope:**  
+This project aims to provide a minimal yet functional booking system. The scope includes:
+- User registration and authentication
+- Availibility viewing and time slot selection
+- Booking creation and cancellation
 
-Contents
---------
-
-.. toctree::
-
-   usage
-   api
+**Technologies Used:**  
+- Frontend: HTML and JS 
+- Backend: Python with FastAPI
+- Database: Sqlite
