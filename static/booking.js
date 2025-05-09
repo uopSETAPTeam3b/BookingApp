@@ -1,14 +1,20 @@
 import { checkLoggedInExpt } from "./nav.js";
 import { showCancelledOverlay } from "./booking_cancelled_overlay.js";
+import { showShareOverlay } from "./share_overlay.js";
 async function onload() {
   const token = localStorage.getItem("token");
   console.log("Token:", token);
   const loginButton = document.getElementById("loginout");
   const loggedStatus = await checkLoggedInExpt(token);
+
+  const addSharedBtn = document.getElementById("addSharedBtn");
+  addSharedBtn.addEventListener("click", add_share_click);
+  console.log("Bookings:", bookings); 
+
   if (!loggedStatus || token === undefined) {
     console.log("User is not logged in");
     const bookingsList = document.getElementById("bookingList");
-    console.log("Bookings:", bookings); 
+   
     loginButton.innerText = "Login";
     document.getElementById("userImage").style.display = "none";
     bookingsList.innerHTML = ""; 
@@ -22,7 +28,35 @@ async function onload() {
   document.getElementById("userImage").style.display = "block";
   fetchBookings(token); 
 }
+async function addSharedBooking(shareCode){
+  const token = localStorage.getItem("token");
+  try {
+    const response = await fetch(`/booking/get_booking_by_share_code?token=${token}&share_code=${shareCode}`)
 
+    if (response.ok) {
+      const data = await response.json();
+      console.log("Booking added successfully:", data);
+      fetchBookings(token); 
+    } else {
+      throw new Error("Failed to add shared booking");
+    }
+  } catch (error) {
+    console.error("Error adding shared booking:", error);
+    alert("Failed to add shared booking: " + error.message);
+  }
+}
+async function add_share_click(){
+  console.log("Add shared booking button clicked");
+  const shareCodeInput = document.getElementById("shareCodeInput");
+  const shareCode = shareCodeInput.value;
+  console.log("Share code:", shareCode);
+  if (shareCode) {
+    await addSharedBooking(shareCode);
+    shareCodeInput.value = ""; 
+  } else {
+    alert("Please enter a valid share code.");
+  }
+}
 async function fetchBookings(token) {
   try {
     const response = await fetch("/booking/get_bookings", {
@@ -56,6 +90,7 @@ async function fetchBookings(token) {
 function displayBookings(bookings) {
   const bookingsList = document.getElementById("bookingList");
   console.log("Bookings:", bookings); 
+  
 
   bookingsList.innerHTML = ""; 
 
@@ -65,16 +100,13 @@ function displayBookings(bookings) {
     
     
     const startTime = new Date(booking.time * 1000).toLocaleString();
-    if (startTime < new Date().toLocaleString()) {
+    if (booking.time + (59 * 60) < Math.floor(Date.now() / 1000)) {
       console.log("Past booking:", booking);
       listItem.classList.add("past-booking");
-    }
-    listItem.innerHTML = `
+      listItem.innerHTML = `
         <strong>Booking ID:</strong> ${booking.id} <br>
         <strong>Building:</strong> ${booking.building?.name || "N/A"} <br>
-        <strong>Address:</strong> ${booking.building?.address_1 || ""}, ${
-      booking.building?.address_2 || ""
-    } <br>
+        <strong>Address:</strong> ${booking.building?.address_1 || ""}, ${booking.building?.address_2 || ""} <br>
         <strong>Access Code:</strong> ${booking.access_code} <br>
         <strong>Start Time:</strong> ${startTime} <br>
         <strong>Duration:</strong> ${booking.duration ?? "N/A"} hour(s)<br>
@@ -84,12 +116,50 @@ function displayBookings(bookings) {
         <button class="btn btn-secondary" onclick="editBtnClick(${
           booking.id
         }, ${Math.floor(Date.now() / 1000) + 3600},1, ${
-      booking.room_id
-    })">Edit</button>
+        booking.room_id
+        })">Edit</button>
+        <button class="btn btn-secondary" onclick="shareBtnClick(${booking.id}, '${booking.share_code}')">Share</button>
+
       `;
+    } else if(booking.shared === true){
+      listItem.classList.add("shared");
+      listItem.innerHTML = `
+        <strong>Booking ID:</strong> ${booking.id} <br>
+        <strong>Building:</strong> ${booking.building?.name || "N/A"} <br>
+        <strong>Address:</strong> ${booking.building?.address_1 || ""}, ${booking.building?.address_2 || ""} <br>
+        <strong>Access Code:</strong> ${booking.access_code} <br>
+        <strong>Start Time:</strong> ${startTime} <br>
+        <strong>Duration:</strong> ${booking.duration ?? "N/A"} hour(s)<br>
+      `;
+
+    } else {
+      listItem.innerHTML = `
+        <strong>Booking ID:</strong> ${booking.id} <br>
+        <strong>Building:</strong> ${booking.building?.name || "N/A"} <br>
+        <strong>Address:</strong> ${booking.building?.address_1 || ""}, ${booking.building?.address_2 || ""} <br>
+        <strong>Access Code:</strong> ${booking.access_code} <br>
+        <strong>Start Time:</strong> ${startTime} <br>
+        <strong>Duration:</strong> ${booking.duration ?? "N/A"} hour(s)<br>
+        <button class="btn btn-primary" onclick="cancelBtnClick(${
+          booking.id
+        })">cancel</button>
+        <button class="btn btn-secondary" onclick="editBtnClick(${
+          booking.id
+        }, ${Math.floor(Date.now() / 1000) + 3600},1, ${
+        booking.room_id
+        })">Edit</button>
+        <button class="btn btn-secondary" onclick="shareBtnClick(${booking.id}, '${booking.share_code}')">Share</button>
+
+      `;
+    }
+    console.log(booking.share_code)
+    
 
     bookingsList.appendChild(listItem);
   });
+}
+function shareBtnClick(bookingId, shareCode) {
+  showShareOverlay(bookingId, shareCode);
 }
 function editBtnClick(bookingId) {
   const token = localStorage.getItem("token");
@@ -165,8 +235,5 @@ function formatTime(startTimestamp, durationHours) {
 }
 window.cancelBtnClick = cancelBtnClick;
 window.editBtnClick = editBtnClick;
-function shareBtnClick() {
-  const token = localStorage.getItem("token");
-}
-
+window.shareBtnClick = shareBtnClick;
 document.addEventListener("DOMContentLoaded", onload);

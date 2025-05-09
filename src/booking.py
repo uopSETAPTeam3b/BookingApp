@@ -23,6 +23,7 @@ class BookingManager(API):
         self.router.add_api_route("/get_rooms", self.get_rooms, methods=["POST"], response_model=list[Room])
         self.router.add_api_route("/get_room", self.get_room, methods=["POST"], response_model=Room)
         self.router.add_api_route("/get_day_bookings", self.get_day_bookings, methods=["GET"], response_model=list[Booking])
+        self.router.add_api_route("/get_booking_by_share_code", self.get_booking_by_share_code, methods=["GET"], response_model=Booking)
     @dataclass
     class BookRoom:
         token: str
@@ -36,7 +37,21 @@ class BookingManager(API):
         room_id: int
         duration: int
         old_booking_id: int
-
+    async def get_booking_by_share_code(self,token:str, share_code: str) -> JSONResponse:
+        """ Returns a booking from a share code """
+        async with DB() as db:
+            if not await db.verify_token(token):
+                raise HTTPException(status_code=404, detail="User not found")
+            booking = await db.get_booking_by_share_code(share_code)
+            if not booking:
+                raise HTTPException(status_code=404, detail="Booking not found")
+            user = await db.get_user(token)
+            if not user:
+                raise HTTPException(status_code=404, detail="User not found")
+            if await db.add_shared_booking(booking.id, user.id):
+                return JSONResponse(status_code=200, content={"message": "Booking shared successfully"})
+            raise HTTPException(status_code=404, detail="Booking not found")
+                                
     def set_hour_on_same_day(self, unix_timestamp: int, target_hour: int) -> int:
         
         dt = datetime.utcfromtimestamp(unix_timestamp)
@@ -114,7 +129,7 @@ class BookingManager(API):
             newStrike = False
             if 0 <= (booking_time - now).total_seconds() <= 1800: 
                 
-                strikes = await db.issue_strike_to_user(booking.user_id)
+                strikes = await db.issue_strike_to_user(booking.user.id)
                 newStrike = True
             else:
                 strikes = await db.get_strikes(booking.user.id)

@@ -35,6 +35,8 @@ class Booking:
     time: int
     user: Optional[User] = None
     access_code: Optional[str] = None
+    share_code: Optional[str] = None
+    shared: Optional[bool] = None
     duration: Optional[float] = None
     building: Optional["Building"] = None  
 @dataclass
@@ -464,13 +466,13 @@ class DatabaseManager:
             building_id = room.building_id
             building = await db.get_building(building_id) 
             access_code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
-
+            share_code = str(''.join(random.choices(string.ascii_uppercase + string.digits, k=10)))
             async with await db.conn.execute(
                 '''
-                INSERT INTO Booking (building_id, room_id, start_time, duration, access_code)
-                VALUES (?, ?, ?, ?, ?)
+                INSERT INTO Booking (building_id, room_id, start_time, duration, access_code, share_code)
+                VALUES (?, ?, ?, ?, ?, ?)
                 ''',
-                (building_id, room_id, time, duration, access_code)
+                (building_id, room_id, time, duration, access_code, share_code)
             ) as cursor:
                 await db.conn.commit()
 
@@ -485,7 +487,23 @@ class DatabaseManager:
             )
             await db.conn.commit()
 
-            return Booking(booking_id, room, time, user, access_code, duration, building)  
+            return Booking(booking_id, room, time, user, access_code, share_code, duration,0, building) 
+    async def add_shared_booking(self, booking_id:int, user_id:int):
+        """ Adds a shared booking to the database """
+        try:
+            await self.conn.execute(
+                '''
+                INSERT INTO User_Booking (user_id, booking_id, shared)
+                VALUES (?, ?, ?)
+                ''',
+                (user_id, booking_id, 1)
+            )
+            await self.conn.commit()
+            return True
+        except Exception as e:
+            print("Error adding shared booking:", e)
+            return False
+     
     async def remove_booking(self, booking_id: int) -> bool:
         """ Removes a booking from the database using the booking_id """
 
@@ -598,11 +616,13 @@ class DatabaseManager:
                 b.start_time, 
                 b.duration, 
                 b.access_code, 
+                b.share_code,
                 bl.building_name, 
                 bl.address_1, 
                 bl.address_2, 
                 bl.opening_time, 
-                bl.closing_time
+                bl.closing_time,
+                ub.shared
             FROM 
                 Booking b
             JOIN 
@@ -629,11 +649,13 @@ class DatabaseManager:
                 start_time = result[4]
                 duration = result[5]
                 access_code = result[6]
-                building_name = result[7]
-                address_1 = result[8]
-                address_2 = result[9]
-                opening_time = result[10]
-                closing_time = result[11]
+                share_code = result[7]
+                building_name = result[8]
+                address_1 = result[9]
+                address_2 = result[10]
+                opening_time = result[11]
+                closing_time = result[12]
+                shared = result[13]
 
                 room = Room(id=room_id, name=room_name, building_id=building_id)  
                 building = Building(
@@ -653,11 +675,32 @@ class DatabaseManager:
                     time=start_time,
                     building=building,
                     duration=duration,
-                    access_code=access_code
+                    access_code=access_code,
+                    share_code=share_code,
+                    shared=shared
                 ))
-           
             return bookings
+    async def get_booking_by_share_code(self, share_code: str) -> Booking:
+        """ Returns a booking from a share code """
+        
+        async with self.conn.execute(
+            '''
+            SELECT b.booking_id
+            FROM Booking b
+            WHERE b.share_code = ?
+            ''',
+            (share_code,)
+        ) as cur:
 
+            result = await cur.fetchone()
+            
+            if result:  
+                booking_id = result[0]     
+
+                
+                booking = await self.get_booking(booking_id)
+                return booking
+            return None
     async def get_room(self, room_id: int) -> Room:
         """ Returns a room from a room id """
         

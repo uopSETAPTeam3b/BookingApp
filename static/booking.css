@@ -57,6 +57,20 @@ main h1 {
     color: var(--text-color);
 }
 
+.main-button {
+    margin-top: 10px;
+    background-color: var(--accent-color);
+    color: white;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+.main-button:hover {
+    background-color: var(--accent-color-hover);
+}
 /* Button */
 .booking-item .btn {
     margin-top: 10px;
@@ -82,6 +96,11 @@ main h1 {
 .booking-item.past-booking {
     background-color: #f0f0f0;
     opacity: 0.6;
+    pointer-events: none;
+}
+.booking-item.shared {
+    background-color: #e0f7fa;
+    opacity: 0.8;
     pointer-events: none;
 }
 
