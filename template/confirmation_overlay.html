@@ -1,26 +1,24 @@
 <div id="confirmationOverlay" class="overlay">
-    <div class="overlay-content">
-      <h2>Booking Confirmed</h2>
-      <p>Your booking ID: <strong id="confirm-booking-id">#--</strong></p>
-  
-      <table id="confirmation-table">
-        <thead>
-          <tr>
-            <th>Room|Time</th>
-          </tr>
-        </thead>
-        <tbody id="confirmation-body">
-          <!-- JS will insert rows -->
-        </tbody>
-      </table>
-  
-      <div class="overlay-buttons">
-        <button id="closeConfirmationBtn">Close</button>
-        <button id="goToBookingsBtn">Go to Bookings</button>
-        <button id="bookMoreBtn">Book More</button>
-      </div>
+  <div class="overlay-content">
+    <h2>Booking Confirmed</h2>
+    <p>Your booking ID: <strong id="confirm-booking-id">#--</strong></p>
+
+    <table id="confirmation-table">
+      <thead>
+        <tr>
+          <th>Room|Time</th>
+        </tr>
+      </thead>
+      <tbody id="confirmation-body"></tbody>
+    </table>
+
+    <div class="overlay-buttons">
+      <button id="closeConfirmationBtn">Close</button>
+      <button id="goToBookingsBtn">Go to Bookings</button>
+      <button id="bookMoreBtn">Book More</button>
     </div>
   </div>
-  
-  <link rel="stylesheet" href="/confirmation_overlay.css">
-  <script src="/confirmation_overlay.js"></script>
+</div>
+
+<link rel="stylesheet" href="/confirmation_overlay.css" />
+<script src="/confirmation_overlay.js"></script>

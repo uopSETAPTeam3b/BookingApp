@@ -38,13 +38,13 @@ class BookingManager(API):
         old_booking_id: int
 
     def set_hour_on_same_day(self, unix_timestamp: int, target_hour: int) -> int:
-        # Convert to UTC datetime
+        
         dt = datetime.utcfromtimestamp(unix_timestamp)
 
-        # Replace the hour, and reset minutes, seconds, microseconds
+        
         updated_dt = dt.replace(hour=target_hour, minute=0, second=0, microsecond=0)
 
-        # Return as Unix timestamp (seconds)
+        
         return int(updated_dt.timestamp())
     
     async def edit_booking(self, newBooking: EditBooking, background_tasks: BackgroundTasks) -> str:
@@ -112,10 +112,12 @@ class BookingManager(API):
             booking_time = datetime.fromtimestamp(booking.time, tz=timezone.utc)
             now = datetime.now(timezone.utc)
             newStrike = False
-            if 0 <= (booking_time - now).total_seconds() <= 1800:  # 1800 seconds = 30 minutes
+            if 0 <= (booking_time - now).total_seconds() <= 1800: 
                 
                 strikes = await db.issue_strike_to_user(booking.user_id)
                 newStrike = True
+            else:
+                strikes = await db.get_strikes(booking.user.id)
                 
 
             await db.remove_booking(cancel.booking_id)
@@ -135,7 +137,7 @@ class BookingManager(API):
                 raise HTTPException(status_code=404, detail="User not found")
             share_to = await db.get_user(share.username)
             if not share_to:
-                # status code needs checking
+                
                 raise HTTPException(status_code=404, detail="User not found")
            
             booking = await db.get_booking(share.booking_id)
@@ -159,20 +161,20 @@ class BookingManager(API):
             if not all_bookings:
                 raise HTTPException(status_code=404, detail="No bookings found")
 
-            # Convert each Booking object to a dict
+            
             booking_dicts = [asdict(b) for b in all_bookings]
             return JSONResponse(content={"bookings": booking_dicts}, status_code=200)
     @dataclass
     class BookingRequest:
-        dateTime: int  # Ensure this matches the incoming data
+        dateTime: int  
 
     async def get_bookings_for_date(self, dateTime:int):
         
         """Returns a list of bookings for the given date"""
         async with DB() as db:
-            # Convert the Unix timestamp to a date (assuming it's in UTC)
+            
             date_obj = datetime.utcfromtimestamp(dateTime)
-            # Use this date to get bookings for that specific day
+            
             bookings = await db.get_bookings_by_date(date_obj.date())
 
             if not bookings:
@@ -201,15 +203,15 @@ class BookingManager(API):
     async def get_day_bookings(self, booking_id: int):
         """Handles a route to get all bookings for the same day as the given booking_id."""
         async with DB() as db:
-            # Get the date of the booking from booking_id
+            
             booking_date = await db.get_booking_date(booking_id)
             if not booking_date:
                 raise HTTPException(status_code=404, detail="Booking not found")
 
-            # Get bookings for that date
+            
             bookings = await db.get_bookings_by_date(booking_date)
 
-            # Format the bookings as a list of dicts for JSON response
+            
             booking_list = []
             for booking in bookings:
                 booked = {
@@ -230,7 +232,7 @@ class BookingManager(API):
                 
                 
 
-            # Return the list of bookings as a JSON response
+            
             return JSONResponse(content={"bookings": booking_list})
     @dataclass
     class GetBooking:
@@ -256,7 +258,7 @@ class BookingManager(API):
                 raise HTTPException(status_code=404, detail="No buildings found")
             rooms_data = [room.__dict__ for room in all_rooms]
             buildings_data = [b.__dict__ for b in all_buildings]
-            # Optional: Remove duplicates by building name (or ID)
+            
             unique_buildings = {b['name']: b for b in buildings_data}.values()
             return JSONResponse(content={"rooms": rooms_data, "buildings": buildings_data}, status_code=200)
     
@@ -268,6 +270,8 @@ class BookingManager(API):
     async def get_room(self, room: GetRoom) -> Room:
         """ Returns a room from a room ID """
         async with DB() as db:
+            if not await db.verify_token(room.token):
+                raise HTTPException(status_code=404, detail="User not found")
             searched_room = await db.get_room(room.room_id)
             if not searched_room:
                 raise HTTPException(status_code=404, detail="Room not found")

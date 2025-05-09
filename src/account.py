@@ -108,7 +108,7 @@ class AccountManager(API):
             if loginStatus:
                 token = await db.create_token(user)
                 print(f"Login successful: {user.username} & {token}")
-                return JSONResponse(content={"token": token}, status_code=200)  # ✅ Fixed here
+                return JSONResponse(content={"token": token}, status_code=200)  
 
             print(f"Login incorrect password: {user.username}")
             self.record_failed_attempt(user.username)
@@ -141,22 +141,22 @@ class AccountManager(API):
     def hash_password(self, password: str) -> str:
         salt = bcrypt.gensalt()
         hashed = bcrypt.hashpw(password.encode('utf-8'), salt)
-        return hashed.decode('utf-8')  # store as string in DB
+        return hashed.decode('utf-8')  
 
-    # Needs to return either a token or an error message for the client (probably json)
+    
     async def register(self, register: Register, background_tasks:BackgroundTasks) -> str:
         """ creates user and returns token """
         async with DB() as db:
             user = await db.get_user_from_username(register.username.lower())
             if user is None:
                 password = register.password
-                #print(password)
+                
                 hashed_password = self.hash_password(password=password)
                 token = await db.create_user(register.username.lower(), hashed_password, register.username.lower())
                 new_user = await db.get_user_from_username(register.username.lower())
                 self.nm.account_created(user=new_user, background_tasks=background_tasks)
                 return JSONResponse(content={"token": token or ""}, status_code=200)
-            return JSONResponse(content={"message": "User already exists"}, status_code=400) # error
+            return JSONResponse(content={"message": "User already exists"}, status_code=400) 
 
     def record_failed_attempt(self,username: str):
         """Record a failed login attempt for a user."""
@@ -174,5 +174,5 @@ class AccountManager(API):
     async def verifyPassword(self, password:str, hashed_password:str) -> bool:
         """Verify the password for a user."""
         async with DB() as db:
-            #user: User = await db.get_user_from_username(login.username)
+            
             return bcrypt.checkpw(password.encode('utf-8'), hashed_password.encode('utf-8'))

@@ -21,7 +21,7 @@ class NotificationManager:
         pass
     def send_email(self, recipient_email: str, subject: str, body: str):
         """Sends an email notification with HTML content."""
-        msg = MIMEText(body, "html")  # Specify content type as HTML
+        msg = MIMEText(body, "html")
         msg["Subject"] = subject or "No Subject"
         msg["From"] = self.SMTP_USERNAME
         msg["To"] = recipient_email
@@ -131,6 +131,10 @@ class NotificationManager:
                         font-size: 14px;
                         color: #777;
                     }}
+                    .access-code {{
+                        color: #d9534f;
+                        font-size: 22px;
+                    }}
                 </style>
             </head>
             <body>
@@ -143,6 +147,13 @@ class NotificationManager:
                     <li><strong>Date:</strong> {date_str}</li>
                     <li><strong>Day:</strong> {weekday}</li>
                 </ul>
+                <p> Please arrive on time and ensure to follow the building's guidelines during your stay.</p>
+                <p>-----------------------------------</p>
+                <p class="access-code"><strong>Access Code:</strong> {booking.access_code}</p>
+                <p>-----------------------------------</p>
+                <p><strong>Building Address:</strong></p>
+                <p>{booking.building.address_1}</p>
+                <p>{booking.building.address_2}</p>
                 <p>If you have any questions or need to make any changes, please contact us.</p>
                 <p>Thank you,<br>The Team</p>
                 <div class="footer">If you believe this was a mistake, please reach out to us immediately.</div>
@@ -277,6 +288,9 @@ class NotificationManager:
                         <li><strong>Date:</strong> {date_str}</li>
                         <li><strong>Day:</strong> {weekday}</li>
                     </ul>
+                    <p>Please note that no strikes have been issued to your account due to this cancellation.</p>
+                    <p>Number of strikes against account: {strikes}</p>
+                    <p>Strikes are issued for cancellations made within 30 minutes of the booking time.</p>
                     <p>If you believe this cancellation was made in error or if you would like to reschedule, please contact us.</p>
                     <p>Thank you,<br>The Team</p>
                     <div class="footer">If you need assistance, feel free to reach out.</div>
