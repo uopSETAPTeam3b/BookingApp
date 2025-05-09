@@ -328,7 +328,12 @@ export function renderBookingTable(bookings, rooms, buildings, selectedDate) {
     table.appendChild(row);
   }
 }
-
+function getSelectedFacilityIds() {
+  const checkboxes = document.querySelectorAll("#facility-list input[type='checkbox']");
+  return Array.from(checkboxes)
+    .filter(cb => cb.checked)
+    .map(cb => cb.value);
+}
 function updateFilterDisplay() {
   const { fromValue, toValue, lengthValue, capacityValue } = getFilterValues();
   const fromDisplay = document.getElementById("fromDisplay");
@@ -349,7 +354,19 @@ function getFilterValues() {
   const lengthValue = document.getElementById("lengthRange").value;
   const capacityValue = document.getElementById("capacityRange").value;
   const roomTypeValue = document.getElementById("roomTypeSelect").value;
-  return { fromValue, toValue, lengthValue, capacityValue, roomTypeValue };
+
+  const facilities = Array.from(document.querySelectorAll("#facility-list input[type='checkbox']"))
+    .filter(cb => cb.checked)
+    .map(cb => cb.value);
+
+  return {
+    fromValue,
+    toValue,
+    lengthValue,
+    capacityValue,
+    roomTypeValue,
+    facilities
+  };
 }
 function applyFiltersCol(slot) {
   const { fromValue, toValue } = getFilterValues();
@@ -382,14 +399,33 @@ function applyFiltersCol(slot) {
   return false;
 }
 function applyFilters(room) {
-  const { fromValue, toValue, lengthValue, capacityValue, roomTypeValue } =
-    getFilterValues();
+  const {
+    fromValue,
+    toValue,
+    lengthValue,
+    capacityValue,
+    roomTypeValue,
+    facilities: selectedFacilities
+  } = getFilterValues();
+  
+  // Filter by type and capacity
   if (
     (roomTypeValue !== "any" && room.type !== roomTypeValue) ||
     room.capacity < capacityValue
   ) {
     return true;
   }
+  
+  // Filter by facilities
+  if (selectedFacilities.length > 0) {
+    const roomFacilityIds = room.facilities.map(f => f.id.toString());
+    const hasAllSelectedFacilities = selectedFacilities.every(id => roomFacilityIds.includes(id));
+    
+    if (!hasAllSelectedFacilities) {
+      return true;
+    }
+  }
+  
   return false;
 }
 
@@ -440,6 +476,47 @@ export async function updateBookingTable() {
   let dateSelector = document.getElementById("date");
   let selectedDateStr = dateSelector.value;
   let useableDate = new Date(selectedDateStr);
+  let facilities = {};
+  for (let room of rooms) {
+    for (let facility of room.facilities) {
+      facilities[facility.id] = {
+        id: facility.id,
+        name: facility.name,
+      };
+    }
+  }
+  
+  const selectedIds = getSelectedFacilityIds();
+  const facilityList = document.getElementById("facility-list");
+  facilityList.innerHTML = "";
+
+  for (let facility of Object.values(facilities)) {
+    const li = document.createElement("li");
+    li.style.listStyleType = "none"; 
+
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.value = facility.id;
+    checkbox.style.marginRight = "8px";
+
+    // Restore previous checked state
+    if (selectedIds.includes(facility.id.toString())) {
+      checkbox.checked = true;
+    }
+
+    checkbox.onclick = () => updateBookingTable();
+
+    const label = document.createElement("strong");
+    label.textContent = facility.name;
+
+    const container = document.createElement("div");
+    container.style.cssText = "font-size: 0.85em; line-height: 1.2; display: flex; align-items: center;";
+    container.appendChild(checkbox);
+    container.appendChild(label);
+
+    li.appendChild(container);
+    facilityList.appendChild(li);
+  }
 
   let selectedDate = parseInt(Math.floor(useableDate.getTime() / 1000));
 
@@ -454,6 +531,7 @@ export async function updateBookingTable() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+
   const buildingSelector = document.getElementById("buildingSelect");
   buildingSelector.addEventListener("change", () => {
     let selectedBuilding = buildingSelector.value;

@@ -54,10 +54,9 @@ CREATE TABLE Room (
 
 CREATE TABLE Facility (
     facility_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    facility_quantity INTEGER NOT NULL,
-    facility_availability_status TEXT NOT NULL CHECK (facility_availability_status IN ('available', 'unavailable')) DEFAULT 'available'
+    facility_name TEXT NOT NULL,
+    facility_description TEXT
 );
--- this table needs an additional attribute to show the facility type for the get_room_facilities() to work. Till this is sorted, the ftn will return facility_id for now. Will update this later.
 
 CREATE TABLE Booking (
     booking_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -91,6 +90,9 @@ CREATE TABLE User_Notification (
 CREATE TABLE Room_Facility (
     room_id INTEGER NOT NULL REFERENCES Room(room_id),
     facility_id INTEGER NOT NULL REFERENCES Facility(facility_id),
+    facility_availability_status TEXT NOT NULL CHECK (facility_availability_status IN ('available', 'unavailable')) DEFAULT 'available',
+    facility_quantity INTEGER NOT NULL DEFAULT 1,
+    facility_notes TEXT,
     PRIMARY KEY (room_id, facility_id)
 );
 
@@ -109,6 +111,23 @@ CREATE TABLE User_University (
     status INTEGER DEFAULT 0 CHECK (status IN (0, 1)), -- 0 for inactive, 1 for active
     PRIMARY KEY (user_id, university_id)
 );
+INSERT INTO Facility (facility_name, facility_description)
+VALUES
+('Projector', 'High-definition ceiling-mounted projector'),
+('Whiteboard', 'Large erasable whiteboard with markers'),
+('Air Conditioning', 'Room temperature control via AC system'),
+('Wi-Fi', 'Wireless internet access'),
+('Computers', 'Networked PCs available for use'),
+('3D Printer', 'Industrial-grade 3D printing machine'),
+('Smart Board', 'Interactive digital smart board for presentations'),
+('Printer', 'Laser printer for document printing'),
+('HDMI Input', 'HDMI connectivity for devices'),
+('Wheelchair Access', 'Facility is accessible via wheelchair ramp'),
+('Lab Equipment', 'Specialized tools and instruments for experiments'),
+('Sound System', 'Built-in audio system for clear sound projection'),
+('Microphone', 'Wireless handheld microphone available'),
+('Charging Ports', 'Power sockets and USB charging stations'),
+('Video Conferencing', 'Room equipped with video conferencing setup');
 
 INSERT INTO University (university_name, address)
 VALUES ('University of Portsmouth', 'Winston Churchill Ave, Portsmouth PO1 2UP'),
@@ -191,6 +210,45 @@ INSERT INTO Room (building_id, room_name, room_type, room_capacity, room_availab
 (7, '7.03', 'lab', 15, 'available'),
 (7, '7.04', 'computing room', 20, 'available'),
 (7, '7.05', 'study room', 10, 'available');
+
+INSERT INTO Room_Facility (room_id, facility_id) VALUES
+(1, 1), (1, 2), (1, 4),
+(2, 2), (2, 4), (2, 10),
+(3, 2), (3, 4), (3, 9),
+(4, 2), (4, 4), (4, 11),
+(5, 1), (5, 2), (5, 4),
+(6, 3), (6, 5), (6, 6),
+(7, 2), (7, 4), (7, 14),
+(8, 4), (8, 10), (8, 14),
+(9, 4), (9, 3), (9, 14),
+(10, 1), (10, 2), (10, 4),
+(11, 2), (11, 4), (11, 9),
+(12, 4), (12, 5), (12, 13),
+(13, 1), (13, 2), (13, 14),
+(14, 3), (14, 4), (14, 9),
+(15, 2), (15, 5), (15, 11),
+(16, 1), (16, 4), (16, 10),
+(17, 3), (17, 4), (17, 14),
+(18, 2), (18, 4), (18, 10),
+(19, 2), (19, 4), (19, 11),
+(20, 2), (20, 4), (20, 12),
+(21, 1), (21, 2), (21, 4),
+(22, 2), (22, 4), (22, 9),
+(23, 4), (23, 10), (23, 14),
+(24, 3), (24, 5), (24, 14),
+(25, 1), (25, 2), (25, 4),
+(26, 2), (26, 4), (26, 10),
+(27, 2), (27, 5), (27, 11),
+(28, 4), (28, 6), (28, 14),
+(29, 2), (29, 4), (29, 14),
+(30, 1), (30, 2), (30, 4),
+(31, 3), (31, 4), (31, 10),
+(32, 2), (32, 5), (32, 14),
+(33, 2), (33, 4), (33, 9),
+(34, 2), (34, 4), (34, 10),
+(35, 2), (35, 4), (35, 14);
+
+
 
 INSERT INTO Booking (building_id, room_id, start_time, share_code, duration, access_code)
 VALUES

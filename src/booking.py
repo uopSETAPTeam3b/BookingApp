@@ -17,6 +17,7 @@ class BookingManager(API):
         self.router.add_api_route("/cancel", self.cancel_booking, methods=["POST"])
         self.router.add_api_route("/share", self.share_room, methods=["POST"])
         self.router.add_api_route("/edit_booking", self.edit_booking, methods=["POST"])
+        self.router.add_api_route("/get_room_facilities", self.get_room_facilities, methods=["GET"])
         self.router.add_api_route("/get_bookings", self.get_bookings, methods=["POST"], response_model=list[Booking])
         self.router.add_api_route("/get_bookings_for_date", self.get_bookings_for_date, methods=["GET"], response_model=list[Booking])
         self.router.add_api_route("/get_booking", self.get_booking, methods=["POST"], response_model=Booking)
@@ -37,6 +38,17 @@ class BookingManager(API):
         room_id: int
         duration: int
         old_booking_id: int
+        
+    async def get_room_facilities(self, token: str, room_id: int) -> JSONResponse:
+        """ Returns a list of facilities for a room """
+        async with DB() as db:
+            if not await db.verify_token(token):
+                raise HTTPException(status_code=404, detail="User not found")
+            room = await db.get_room(room_id)
+            if not room:
+                raise HTTPException(status_code=404, detail="Room not found")
+            facilities = await db.get_room_facilities(room_id)
+            return JSONResponse(content={"facilities": facilities}, status_code=200)
     async def get_booking_by_share_code(self,token:str, share_code: str) -> JSONResponse:
         """ Returns a booking from a share code """
         async with DB() as db:
@@ -268,15 +280,19 @@ class BookingManager(API):
             all_rooms = await db.get_rooms()
             if not all_rooms:
                 raise HTTPException(status_code=404, detail="No rooms found")
+            
             all_buildings = await db.get_buildings()
             if not all_buildings:
                 raise HTTPException(status_code=404, detail="No buildings found")
-            rooms_data = [room.__dict__ for room in all_rooms]
-            buildings_data = [b.__dict__ for b in all_buildings]
             
+            # Use the to_dict method to serialize the rooms and buildings
+            rooms_data = [room.to_dict() for room in all_rooms]
+            buildings_data = [b.to_dict() for b in all_buildings]
+            
+            # Ensure unique buildings by name
             unique_buildings = {b['name']: b for b in buildings_data}.values()
-            return JSONResponse(content={"rooms": rooms_data, "buildings": buildings_data}, status_code=200)
-    
+            
+            return JSONResponse(content={"rooms": rooms_data, "buildings": list(unique_buildings)}, status_code=200)
     @dataclass
     class GetRoom:
         token: str

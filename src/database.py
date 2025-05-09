@@ -7,7 +7,15 @@ import aiosqlite
 from pydantic.dataclasses import dataclass
 import random
 import string
-
+@dataclass
+class Facility:
+    id: int
+    name: str
+    type: Optional[str] = None
+    description: Optional[str] = None
+    def to_dict(self):
+        return {"id": self.id, "name": self.name}
+    
 @dataclass
 class Room:
     id: int
@@ -15,6 +23,17 @@ class Room:
     building_id: int
     type: Optional[str] = None
     capacity: Optional[int] = None
+    facilities: Optional[list[Facility]] = None
+    def to_dict(self):
+        # Convert the list of Facility objects to dictionaries
+        return {
+            "id": self.id,
+            "name": self.name,
+            "building_id": self.building_id,
+            "type": self.type,
+            "capacity": self.capacity,
+            "facilities": [facility.to_dict() for facility in (self.facilities or [])],
+        }
 
 @dataclass
 class LoggedInUser:
@@ -47,6 +66,15 @@ class Building:
     address_2: str
     opening_time: str
     closing_time: str
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "address_1": self.address_1,
+            "address_2": self.address_2,
+            "opening_time": self.opening_time,
+            "closing_time": self.closing_time,
+        }
 class DB:
     def __init__(self):
         self.db = None
@@ -401,26 +429,43 @@ class DatabaseManager:
                     role=result[3]
                 )
             return None
-    async def get_rooms(self) -> list[Room]:
-        """ Returns a list of all rooms """
         
+    async def get_rooms(self) -> list[Room]:
+        """ Returns a list of all rooms with their facilities """
+
         async with self.conn.execute(
             '''
-            SELECT room_id, room_name, building_id, room_type, room_capacity FROM Room;
+            SELECT 
+                r.room_id, r.room_name, r.building_id, r.room_type, r.room_capacity,
+                f.facility_id, f.facility_name, f.facility_description
+            FROM Room r
+            LEFT JOIN Room_Facility rf ON r.room_id = rf.room_id
+            LEFT JOIN Facility f ON rf.facility_id = f.facility_id
+            ORDER BY r.room_id;
             '''
         ) as cur:
-
             results = await cur.fetchall()
-            rooms = []  
-            for result in results:
-                room_id = result[0]
-                room_name = result[1]
-                building_id = result[2]
-                room_type = result[3] if len(result) > 3 else None  
-                room_capacity = result[4] if len(result) > 4 else None  
-                
-                rooms.append(Room(id=room_id, name=room_name, building_id=building_id, type=room_type, capacity=room_capacity))
-            return rooms
+            rooms = {}
+            for row in results:
+                room_id = row[0]
+                if room_id not in rooms:
+                    rooms[room_id] = Room(
+                        id=room_id,
+                        name=row[1],
+                        building_id=row[2],
+                        type=row[3],
+                        capacity=row[4],
+                        facilities=[]
+                    )
+                if row[5] is not None:
+                    facility = Facility(
+                        id=row[5],
+                        name=row[6],
+                        description=row[7]
+                    )
+                    rooms[room_id].facilities.append(facility)
+
+            return list(rooms.values())
 
     async def get_buildings(self) -> list[Building]:
         """ Returns a list of all buildings """
@@ -487,7 +532,7 @@ class DatabaseManager:
             )
             await db.conn.commit()
 
-            return Booking(booking_id, room, time, user, access_code, share_code, duration,0, building) 
+            return Booking(booking_id, room, time, user, access_code, share_code, 0, duration, building) 
     async def add_shared_booking(self, booking_id:int, user_id:int):
         """ Adds a shared booking to the database """
         try:
