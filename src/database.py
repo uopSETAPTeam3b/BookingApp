@@ -5,7 +5,8 @@ import time
 import secrets
 import aiosqlite
 from pydantic.dataclasses import dataclass
-
+import random
+import string
 
 @dataclass
 class Room:
@@ -208,7 +209,7 @@ class DatabaseManager:
             """ Creates and returns a token new for a user """
     async def verify_token(self, token: str) -> bool:
         """ Verifies the token """
-        user = self.get_user(token)
+        user = await self.get_user(token)
         if not user:
             return False
         return True
@@ -318,36 +319,36 @@ class DatabaseManager:
                 return result["email"]
         return None
 
-    async def find_booking(self, room_id: int, time: str) -> Booking:
+    async def find_booking(self, room_id: int, time: int) -> Booking | str:
         """ Returns a booking if found at a room and time """
-        # Query to find a booking in the Booking table for the specified room and time
-        async with self.conn.execute(
+        async with await self.conn.execute(
             '''
-            SELECT b.booking_id, b.building_id, b.room_id, b.start_time, b.duration, b.access_code, ub.user_id
+            SELECT b.booking_id, b.building_id, b.room_id, b.start_time, b.duration, b.access_code, ub.user_id,
+                   r.room_name
             FROM Booking b
             JOIN User_Booking ub ON b.booking_id = ub.booking_id
-            WHERE b.room_id = ? AND b.start_time <= ?
+            JOIN Room r ON b.room_id = r.room_id
+            WHERE b.room_id = ? AND b.start_time <= ? AND (b.start_time + b.duration * 3600) > ?
             ''',
-            (room_id, time)
+            (room_id, time, time)
         ) as cur:
-
-            result = cur.fetchone()
-
+            result = await cur.fetchone()
+            
             if result:
-                booking_id = result[0]  # booking_id
-                building_id = result[1]  # building_id
-                room_id = result[2]      # room_id
-                start_time = result[3]   # start_time
-                duration = result[4]      # duration
-                access_code = result[5]   # access_code
-                user_id = result[6]       # user_id
+                booking_id = result[0]
+                building_id = result[1]
+                room_id = result[2]
+                start_time = result[3]
+                duration = result[4]
+                access_code = result[5]
+                user_id = result[6]
+                room_name = result[7]
 
-                # Retrieve User object from user_id
-                user = self.get_user_from_booking(user_id)
+                user = await self.get_user_from_booking(user_id)  # Make sure this is async
+                room = Room(room_id, room_name, building_id)
 
-                return Booking(booking_id, user, Room(room_id), start_time)
+                return Booking(booking_id,room,start_time, user, access_code, duration)
             return "Booking doesn't exist."
-
     async def get_booking(self, booking_id: int) -> Booking:
         """ Returns a booking from a booking_id """
         # Query to get the booking details from the Booking table
@@ -373,11 +374,31 @@ class DatabaseManager:
                 user_id = result[6]      # user_id
 
                 # Retrieve User object from user_id
-                user = await self.get_user(user_id)
-
+                user = await self.get_user_from_id(user_id)
+                building = await self.get_building(building_id)  
                 room = await self.get_room(room_id)
-                return Booking(booking_id, room, start_time, user )
+                return Booking(booking_id, room, start_time, user, building = building, access_code=access_code, duration=duration)
             return "Booking doesn't exist."
+        
+    async def get_user_from_id(self, user_id: int) -> User:
+        """ Returns a user from a user_id """
+        # Query to get a user from the User table
+        async with self.conn.execute(
+            '''
+            SELECT user_id, username, email, role FROM User WHERE user_id = ?;
+            ''',
+            (user_id,)
+        ) as cur:
+
+            result = await cur.fetchone()
+            if result:
+                return User(
+                    id=result[0],
+                    username=result[1],
+                    email=result[2],
+                    role=result[3]
+                )
+            return "User not found."
     async def get_rooms(self) -> list[Room]:
         """ Returns a list of all rooms """
         # Query to get all rooms from the Room table
@@ -428,17 +449,43 @@ class DatabaseManager:
                     closing_time=closing_time
                 ))
             return buildings  # Return the list of Building objects
-    async def add_booking(self, room_id: int, time: int, token: str) -> Booking:
-        """ Adds a booking to the database  """
-        # query must insert booking into database
-        #INSERT INTO Booking (building_id, room_id, start_time, duration, access_code) VALUES (?, ?, ?, ?, ?);
-        #INSERT INTO User_Booking (user_id, booking_id) VALUES (?, last_insert_rowid());
-        # user is found from token
-        user = self.get_user(token)
-        if not user:
-            return Booking(0, User("", ""), Room(0), 0)
-        return Booking(0, User("", ""), Room(0), 0)
+    async def add_booking(self, room_id: int, time: int, token: str, duration: int) -> Booking:
+        """ Adds a booking to the database """
+        async with DB() as db:
+            user = await db.get_user(token)  # Await if it's async
+            if not user:
+                return Booking(0, User("", ""), Room(0), 0)
 
+            # Get the room to fetch building_id
+            room = await db.get_room(room_id)  # Implement this method if not done
+            if not room:
+                return Booking(0, User("", ""), Room(0), 0)
+
+            building_id = room.building_id
+            building = await db.get_building(building_id) 
+            access_code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+
+            async with await db.conn.execute(
+                '''
+                INSERT INTO Booking (building_id, room_id, start_time, duration, access_code)
+                VALUES (?, ?, ?, ?, ?)
+                ''',
+                (building_id, room_id, time, duration, access_code)
+            ) as cursor:
+                await db.conn.commit()
+
+            booking_id = cursor.lastrowid
+
+            await db.conn.execute(
+                '''
+                INSERT INTO User_Booking (user_id, booking_id)
+                VALUES (?, ?)
+                ''',
+                (user.id, booking_id)
+            )
+            await db.conn.commit()
+
+            return Booking(booking_id, room, time, user, access_code, duration, building)  # Return the created booking
     async def remove_booking(self, booking_id: int) -> bool:
         """ Removes a booking from the database using the booking_id """
 
@@ -455,7 +502,27 @@ class DatabaseManager:
             return True
         return False  
 
+    async def get_building(self, building_id: int) -> Building:
+        """ Returns a building from a building_id """
+        # Query to get a building from the Building table
+        async with self.conn.execute(
+            '''
+            SELECT building_id, building_name, address_1, address_2, opening_time, closing_time FROM Building WHERE building_id = ?;
+            ''',
+            (building_id,)
+        ) as cur:
 
+            result = await cur.fetchone()
+            if result:
+                return Building(
+                    id=result[0],
+                    name=result[1],
+                    address_1=result[2],
+                    address_2=result[3],
+                    opening_time=result[4],
+                    closing_time=result[5]
+                )
+            return "Building not found."  # Return an error message if building not found
     async def get_all_bookings(self) -> list[Booking]:
         """ Returns a list of all future/current bookings """
         # Query to get all future/current bookings

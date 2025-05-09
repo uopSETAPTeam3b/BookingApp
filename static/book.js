@@ -1,3 +1,5 @@
+import { checkLoggedInExpt } from "./nav.js";
+import { showConfirmationOverlay } from "./confirmation_overlay.js";
 let previousBuilding = null;
 let selectedSlots = []
 // Setup Date
@@ -22,16 +24,17 @@ pre.addEventListener("click", () => {
 })
 
 function getSelectedBookings() {
-    let table = document.getElementById("bookings-table");
+    const table = document.getElementById("bookings-table");
+    const selections = [];
 
-    let selections = [];
-    for (let row of table.children) {
-        for (let data of row.children) {
-            if (data.children[0] != undefined) {
-                let box = data.children[0];
-                if (box.checked && !box.disabled) {
-                    selections.push({ time: box.getAttribute("time"), room: box.getAttribute("room") })
-                }
+    for (let row of table.rows) {
+        for (let cell of row.cells) {
+            
+            if (cell.textContent === "✔️") {
+                selections.push({
+                    time: cell.dataset.time,
+                    room: cell.dataset.roomId
+                });
             }
         }
     }
@@ -45,21 +48,72 @@ let book = document.querySelector("#book");
 
 book.addEventListener("click", () => {
     let sel = getSelectedBookings();
-    for (let booking of sel) {
-        let time = new Date(date.value);
-        const offsetMinutes = new Date().getTimezoneOffset();
-        time.setHours(time.getHours() + Number(booking.time) + offsetMinutes / 60);
-        fetch("/booking/book", {
-            method: "POST",
-            body: JSON.stringify({
-                token: localStorage.getItem("token"),
-                time: time.getTime()
-            })
-        })
+    if (sel.length === 0) return;
+    
+    let room = null;
+    for (let s of sel) {
+        if (room !== null && room !== s.room) {
+            alert("Please select only one room");
+            return;
+        }
+        room = s.room;
     }
-    console.log(sel);
-})
+    // Assume the earliest selected time is the start
+    const firstBooking = sel[0];
+    let dateSelector = document.getElementById("date"); 
+    let selectedDateStr = dateSelector.value; // format: "YYYY-MM-DD"
+    let useableDate = new Date(selectedDateStr);
+    
+    // Convert to Unix timestamp (in seconds)
+    let selectedDate = parseInt(Math.floor(useableDate.getTime() / 1000));
+    const offsetMinutes = new Date().getTimezoneOffset();
+    console.log("Offset minutes", (offsetMinutes ))
+    let slotTime = (selectedDate + ((Number(firstBooking.time) * 60) * 60)) + (offsetMinutes * 60);
+    console.log("Slot time", slotTime);
 
+    fetch("/booking/book", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            token: localStorage.getItem("token"),
+            datetime: slotTime,
+            duration: sel.length,
+            room_id: firstBooking.room
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.text().then(err => {
+                throw new Error(err);
+            });
+        }
+        return response.json();  // ← parse as JSON
+    })
+    .then(data => {
+        console.log("Booking response:", data);
+
+        // Use response data to show confirmation overlay
+        updateBookingTable();
+        showConfirmationOverlay(data.booking_id, [{
+            room: `${data.building_name} - ${data.room_name}`,
+            time: formatTime(data.start_time, data.duration)
+        }]);
+    })
+    .catch(console.error);
+
+});
+function formatTime(startTimestamp, durationHours) {
+    const startDate = new Date(startTimestamp * 1000); // Assuming UNIX time
+    const endDate = new Date(startDate.getTime() + durationHours * 60 * 60 * 1000);
+
+    const format = date =>
+        date.getHours().toString().padStart(2, '0') + ":" +
+        date.getMinutes().toString().padStart(2, '0');
+
+    return `${format(startDate)} - ${format(endDate)}`;
+}
 function getIdForRoom(room) {
     return Object.keys(roomids).find(key => roomids[key] === room)
 }
@@ -283,14 +337,37 @@ function getFilterValues() {
     const roomTypeValue = document.getElementById("roomTypeSelect").value;
     return { fromValue, toValue, lengthValue , capacityValue, roomTypeValue};
 }
-function applyFiltersCol(slot){
-    const { fromValue, toValue, lengthValue, capacityValue, roomTypeValue} = getFilterValues();
-    if (slot < fromValue || slot > toValue ) {
-        return true;
+function applyFiltersCol(slot) {
+    const { fromValue, toValue } = getFilterValues();
+    const now = new Date();
+    const currentDay = now.getDate();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+
+    const dateInput = document.querySelector("#date").value;
+    const selectedDate = new Date(dateInput);
+    const selectedDay = selectedDate.getDate();
+    const selectedMonth = selectedDate.getMonth();
+    const selectedYear = selectedDate.getFullYear();
+
+    const isToday = currentDay === selectedDay &&
+                    currentMonth === selectedMonth &&
+                    currentYear === selectedYear;
+
+    // If it's today, apply time check
+    const isTooEarly = isToday && (slot < currentHour || (slot === currentHour && currentMinute > 45));
+
+    // Apply general filter bounds or if it's too early today
+    if (slot < fromValue || slot > toValue || isTooEarly) {
+        return true; // filtered out
     }
-    return false;
+
+    return false; // slot is valid
 }
 function applyFilters(room){
+    
     const { fromValue, toValue, lengthValue, capacityValue, roomTypeValue} = getFilterValues();
     if ((roomTypeValue !== "any" && room.type !== roomTypeValue) || room.capacity < capacityValue) {
         
@@ -326,7 +403,15 @@ function isTimeSlotBooked(booking, timeSlot, slotDurationInSeconds = 3600) {
   }
 
 export async function updateBookingTable(){
-
+   
+    if (await checkLoggedInExpt() === false) {
+        const table = document.getElementById("bookings-table");
+        table.innerHTML = "";
+        const listItem = document.createElement('li');
+        listItem.innerHTML = "You are not logged in. Please log in to view your bookings.";
+        table.appendChild(listItem);
+        return;
+    }
     let date = document.querySelector("#date");
 
     let response = await fetch("/booking/get_rooms", {

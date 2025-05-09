@@ -47,7 +47,7 @@ class BookingManager(API):
         # Return as Unix timestamp (seconds)
         return int(updated_dt.timestamp())
     
-    async def edit_booking(self, newBooking: EditBooking) -> str:
+    async def edit_booking(self, newBooking: EditBooking, background_tasks: BackgroundTasks) -> str:
         """ Edits a room booking from a (only) validated user """
         async with DB() as db:
             if not await db.verify_token(newBooking.token):
@@ -60,27 +60,41 @@ class BookingManager(API):
             if await db.edit_booking(
                 newBooking.old_booking_id, newBooking.room_id, date_time, newBooking.duration
             ):
-                #self.nm.booking_edited(oldBooking, newBooking)
+                newBookedRoom = await db.get_booking(newBooking.old_booking_id)
+                self.nm.booking_edited(oldBooking, newBookedRoom, background_tasks=background_tasks)
                 return "Booking edited successfully"
             else:
                 return "Booking edit failed"
             
 
         
-    async def book_room(self, booking: BookRoom) -> str:
+    async def book_room(self, booking: BookRoom, background_tasks: BackgroundTasks) -> JSONResponse:
         """ Books a room from a (only) validated user """
         async with DB() as db:
             if not await db.verify_token(booking.token):
                 raise HTTPException(status_code=404, detail="User not found")
 
             existing_booking = await db.find_booking(booking.room_id, booking.datetime)
-            if existing_booking:
+            if existing_booking != "Booking doesn't exist.":
                 raise HTTPException(status_code=409, detail="Room already booked")
             booked_room = await db.add_booking(
-                booking.room_id, booking.datetime, booking.token
+                booking.room_id, booking.datetime, booking.token, booking.duration
             )
-            self.nm.booking_complete(booked_room)
-            return "Booking successful"
+            self.nm.booking_complete(booked_room, background_tasks=background_tasks)
+            return JSONResponse(
+                content={
+                    "message": "Room booked successfully",
+                    "booking_id": booked_room.id,
+                    "access_code": booked_room.access_code,
+                    "room_id": booked_room.room.id,
+                    "room_name": booked_room.room.name,
+                    "building_id": booked_room.building.id,
+                    "building_name": booked_room.building.name,
+                    "start_time": booked_room.time,
+                    "duration": booked_room.duration
+                },
+                status_code=200,
+            )
 
     @dataclass
     class CancelRoom:
@@ -105,7 +119,7 @@ class BookingManager(API):
                 
 
             await db.remove_booking(cancel.booking_id)
-            self.nm.booking_cancelled(booking, strikes, newStrike, background_tasks)
+            self.nm.booking_cancelled(booking, strikes, newStrike, background_tasks=background_tasks)
             return "Booking cancelled"
 
     @dataclass
@@ -154,7 +168,6 @@ class BookingManager(API):
 
     async def get_bookings_for_date(self, dateTime:int):
         
-        print(f"Received dateTime: {dateTime}")
         """Returns a list of bookings for the given date"""
         async with DB() as db:
             # Convert the Unix timestamp to a date (assuming it's in UTC)
