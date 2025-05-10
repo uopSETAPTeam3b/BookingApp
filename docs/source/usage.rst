@@ -29,3 +29,14 @@ To test the app, use pytest with the test.py script
 .. code-block:: console
 
     (.venv) $ pytest ./src/test.py
+
+
+Adding Own Data to the Application
+----------------------------------
+
+To add your own data duplicate or modify insert.sql
+If file name changes find in app.py
+.. code-block:: py
+    INSERT_SCRIPT = ""
+
+and modify the value
