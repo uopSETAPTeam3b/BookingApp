@@ -1,0 +1,22 @@
+{% set page="account" %} {% include "nav.html" %}
+<div id="account-container">
+  <section id="general-details">
+    <h2>Account Details</h2>
+    <p>
+      <strong>Email:</strong> <span id="user-email"></span
+      ><button id="verify-email-btn">Verify</button>
+    </p>
+    <p><strong>Username:</strong> <span id="user-username"></span></p>
+    <p><strong>Phone Number:</strong> <span id="user-phone"></span></p>
+    <p><strong>University:</strong> <span id="user-university"></span></p>
+    <div id="university-section"></div>
+    <p><strong>Strikes:</strong> <span id="user-strikes"></span></p>
+  </section>
+
+  <section id="admin-section" style="display: none">
+    <h2>University Access Requests</h2>
+    <ul id="university-access-list"></ul>
+  </section>
+</div>
+
+<script src="/account.js"></script>

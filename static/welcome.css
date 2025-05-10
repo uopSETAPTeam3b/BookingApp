@@ -1,0 +1,62 @@
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background-color: white;
+    background-image: none; /* Override background image from style.css */
+    color: var(--text-color);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    text-align: center;
+    position: relative;
+  }
+  
+  .darkmode body {
+    background-color: var(--base-color);
+    background-image: none; /* Ensure no background image in dark mode */
+  }
+  
+  h1 {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+  }
+  
+  .darkmode h1,
+  .darkmode p {
+    color: #ffffff;
+  }
+  
+
+
+  p {
+    font-size: 1.2rem;
+    margin-bottom: 2rem;
+  }
+  
+  .button {
+    padding: 0.8rem 1.5rem;
+    margin: 0.5rem;
+    font-size: 1rem;
+    color: var(--base-color);
+    background-color: var(--accent-color);
+    border: none;
+    border-radius: 5px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  .button:hover {
+    background-color: var(--text-color);
+  }
+  
+  .book-vectors {
+    pointer-events: none;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
+  }
+  

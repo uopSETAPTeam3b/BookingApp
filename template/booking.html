@@ -1,0 +1,22 @@
+{% set page="booking" %} {% include "nav.html" %} {% include
+"booking_cancelled_overlay.html" %} {% include "booking_overlay.html" %}
+{% include "share_overlay.html" %}
+<link rel="stylesheet" href="/nav.css" />
+<link rel="stylesheet" href="/booking.css" />
+<link rel="stylesheet" href="/style.css" />
+<link rel="stylesheet" href="/darkmode.css" />
+
+<main>
+  <h1>Your Bookings</h1>
+  <button class="main-button" id="addSharedBtn">Enter Share Code</button>
+  <input type="text" id="shareCodeInput" placeholder="Enter Share Code" />
+  <ul id="bookingList"></ul>
+</main>
+
+<button id="theme-switch" title="Toggle Theme">
+  <img src="/light_mode.svg" alt="Light Mode" class="theme-icon light-icon" />
+  <img src="/dark_mode.svg" alt="Dark Mode" class="theme-icon dark-icon" />
+</button>
+
+<script type="module" src="/darkmode.js"></script>
+<script type="module" src="/booking.js"></script>
