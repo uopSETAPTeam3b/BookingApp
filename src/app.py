@@ -18,7 +18,7 @@ app = FastAPI()
 
 
 if os.environ.get("PYTEST_VERSION") is not None:
-    STATIC = "../static"
+    STATIC = "static"
     DatabaseManager("database_test.db")
 else:
     STATIC = "static"
