@@ -9,6 +9,11 @@ from booking import BookingManager
 from database import DatabaseManager
 from notification import NotificationManager
 
+CREATE_FILE="src/create.sql"
+INSERT_FILE="src/insert.sql"
+# Set the Create and insert files
+DatabaseManager(create=CREATE_FILE, insert=INSERT_FILE)
+
 
 app = FastAPI()
 

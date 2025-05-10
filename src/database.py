@@ -92,11 +92,13 @@ class DatabaseManager:
 
     file: str = "database.db"
     create_script: str = "src/create.sql"
+    insert_script: str = "src/insert.sql"
 
     
-    def __init__(self, file: str | None = None, create: str | None = None):
+    def __init__(self, file: str | None = None, create: str | None = None, insert: str | None = None):
         DatabaseManager.file = file or DatabaseManager.file
         DatabaseManager.create_script = create or DatabaseManager.create_script
+        DatabaseManager.insert_script = insert or DatabaseManager.insert_script
         self.conn: aiosqlite.Connection | None = None
 
     @classmethod
@@ -109,6 +111,8 @@ class DatabaseManager:
 
         if not db_exists:
             with open(self.create_script, "r") as f:
+                await self.conn.executescript(f.read())
+            with open(self.insert_script, "r") as f:
                 await self.conn.executescript(f.read())
 
         await self.conn.commit()
