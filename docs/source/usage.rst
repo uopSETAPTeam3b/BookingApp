@@ -34,9 +34,11 @@ To test the app, use pytest with the test.py script
 Adding Own Data to the Application
 ----------------------------------
 
+.. role:: python(code)
+   :language: python
+
 To add your own data duplicate or modify insert.sql
-If file name changes find in app.py
-.. code-block:: py
-    INSERT_SCRIPT = ""
+
+If file name changes find :python:`INSERT_SCRIPT = ""` in :code:`app.py`
 
 and modify the value
