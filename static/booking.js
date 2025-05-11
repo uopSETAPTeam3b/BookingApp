@@ -31,7 +31,7 @@ async function onload() {
 async function addSharedBooking(shareCode){
   const token = localStorage.getItem("token");
   try {
-    const response = await fetch(`/booking/get_booking_by_share_code?token=${token}&share_code=${shareCode}`)
+    const response = await fetch(`/booking/share_booking_via_code?token=${token}&share_code=${shareCode}`)
 
     if (response.ok) {
       const data = await response.json();

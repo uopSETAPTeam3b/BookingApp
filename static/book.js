@@ -226,6 +226,10 @@ export function renderBookingTable(bookings, rooms, buildings, selectedDate) {
             })</span>
           </div>
         `;
+    room_name.addEventListener("click", () => {
+      showRoomDetails(room, currentBuilding)
+    })
+
     row.appendChild(room_name);
 
     const availabilityMap = [];
@@ -327,6 +331,34 @@ export function renderBookingTable(bookings, rooms, buildings, selectedDate) {
 
     table.appendChild(row);
   }
+}
+function closeRoomModal() {
+  document.getElementById("room-modal").style.display = "none";
+  document.getElementById("modal-backdrop").style.display = "none";
+}
+function showRoomDetails(room, currentBuilding) {
+
+  const modal = document.getElementById("room-modal");
+  const content = document.getElementById("room-modal-content")
+  content.innerHTML = `
+  <h3>${room.name}</h3>
+  <p><strong>Type:</strong> ${room.type || "N/A"}</p>
+  <p><strong>Capacity:</strong> ${room.capacity || "N/A"}</p>
+  <p><strong>Building:</strong> ${currentBuilding?.name || "N/A"}</p>
+  <p><strong>Address:</strong> ${currentBuilding?.address_1 || ""}, ${
+    currentBuilding?.address_2 || ""
+  }</p>
+  <p><strong>Facilities:</strong></p>
+  <ul>
+    ${
+      Array.isArray(room.facilities) && room.facilities.length > 0
+        ? room.facilities.map(f => `<li>${f.name || "N/A"}</li>`).join("")
+        : "<li>No facilities listed</li>"
+    }
+  </ul>
+`;
+  modal.style.display = "block";
+  
 }
 function getSelectedFacilityIds() {
   const checkboxes = document.querySelectorAll("#facility-list input[type='checkbox']");
@@ -566,7 +598,8 @@ document.addEventListener("DOMContentLoaded", () => {
       capacityValue + " People" + (capacityValue > 1 ? "s" : "");
     updateBookingTable();
   });
-
+  const closeRoomDetsBtn = document.getElementById("closeRoomDetails");
+  closeRoomDetsBtn.addEventListener("click", closeRoomModal);
   roomTypeSelect.addEventListener("change", () => {
     const roomTypeValue = roomTypeSelect.value;
     updateBookingTable();

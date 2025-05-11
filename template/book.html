@@ -67,7 +67,7 @@
   <div>
     <label for="facilities">Facilities:</label>
     <list id="facility-list">
-      
+
     </list>
   </div>
   <div>
@@ -87,7 +87,10 @@
 <input type="date" value="" id="date" />
 <button id="next">-></button>
 <button id="book">Book</button>
-
+<div id="room-modal" class="room-modal">
+  <button id="closeRoomDetails" style="float: right;">✖</button>
+  <div id="room-modal-content"></div>
+</div>
 <table id="bookings-table"></table>
 
 <script src="book.js" type="module"></script>
