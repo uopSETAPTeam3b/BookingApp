@@ -25,6 +25,8 @@ main h1 {
     display: flex;
     flex-wrap: wrap;
     gap: 20px;
+    background: var(--base-color);
+    color: var(--base-color);
 }
 
 /* Individual card styling */
