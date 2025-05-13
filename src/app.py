@@ -9,22 +9,22 @@ from booking import BookingManager
 from database import DatabaseManager
 from notification import NotificationManager
 
-#from fastapi.staticfiles import StaticFiles
+
 app = FastAPI()
 
 
 
-# from notification import NotificationManager
+
 
 
 if os.environ.get("PYTEST_VERSION") is not None:
-    STATIC = "../static"
+    STATIC = "static"
     DatabaseManager("database_test.db")
 else:
     STATIC = "static"
 
 notif = NotificationManager()
-# app.include_router(notif.router)
+
 
 account = AccountManager(notif)
 app.include_router(account.router)
@@ -33,7 +33,7 @@ app.include_router(booking.router)
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
-#app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, STATIC)), name="static")
+
 
 TEMPLATE = "template"
 print(os.path.join(BASE_DIR, TEMPLATE))
