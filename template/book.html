@@ -1,67 +1,81 @@
-{%set page="book"%}
-{%include "nav.html"%}
+{% set page="book" %}
+{% include "nav.html" %}
 
 <link rel="stylesheet" href="/book.css">
 <link rel="stylesheet" href="/darkmode.css">
 <link rel="stylesheet" href="/nav.css">
-<style href="book.css"></style>
-<button id="theme-switch" title="Toggle Theme">
-    <img src="/light_mode.svg" alt="Light Mode" class="theme-icon light-icon">
-    <img src="/dark_mode.svg" alt="Dark Mode" class="theme-icon dark-icon">
-</button>
-<div>
-    <label for="buildingSelect">Building:</label>
-    <select id="buildingSelect" name="buildingSelect">
-        <option value="Any">Any</option>
-    </select>
-</div>
-<button id="expand-filter">Filters</button>
-<section id="filter" class="hidden">
-    <div>
-        <label for="lengthRange">Length (Hours):</label>
-        <input type="range" id="lengthRange" name="lengthRange" min="1" max="24" value="1">
-        <span id="lengthDisplay">1 Hour</span>
-    </div>
-    <div>
-        <label for="fromToRange">From (Hour of Day):</label>
-        <input type="range" id="fromRange" name="fromToRange" min="0" max="23" value="0">
-        <span id="fromDisplay">00:00</span>
-    </div>
-    <div>
-        <label for="fromToRange">To (Hour of Day):</label>
-        <input type="range" id="toRange" name="fromToRange" min="0" max="23" value="24">
-        <span id="toDisplay">24:00</span>
-    </div>
-    <div>
-        <label for="roomTypeSelect">Room Type:</label>
-        <select id="roomTypeSelect" name="roomTypeSelect">
-            <option value="any">Any</option>
-            <option value="study room">Study Room</option>
-            <option value="lecture room">Lecture Room</option>
-            <option value="computing room">Computing Room</option>
-            <option value="lab">Lab</option>
-        </select>
-    </div>
-    
-    <div>
-        <label for ="facilities">Facilities:</label>
-        <select id="facilities" name="facilities">
-            <option value="any">Any</option>
-        </select>
-    </div>
-    <div>
-        <label for="capacityRange">Capacity:</label>
-        <input type="range" id="capacityRange" name="capacityRange" min="1" max="1000" value="1">
-        <span id="capacityDisplay">1</span>
-    </div>
-</section>
-<button id="pre"><-</button>
-<input type="date" value="" id="date">
-<button id="next">-></button>
-<button id="book">Book</button>
 
+<button id="theme-switch" title="Toggle Theme">
+  <img src="/light_mode.svg" alt="Light Mode" class="theme-icon light-icon">
+  <img src="/dark_mode.svg" alt="Dark Mode" class="theme-icon dark-icon">
+</button>
+
+<div>
+  <label for="buildingSelect">Building:</label>
+  <select id="buildingSelect" name="buildingSelect">
+    <option value="Any">Any</option>
+  </select>
+</div>
+
+<div id="nav-controls">
+  <button id="pre"><-</button>
+  <input type="date" value="" id="date">
+  <button id="next">-></button>
+  <button id="book">Book</button>
+</div>
+
+<!-- Filter Toggle -->
+<button id="expand-filter">Filters</button>
+
+<!-- Filters Section -->
+<section id="filter" class="hidden">
+  <div>
+    <label for="lengthRange">Length (Hours):</label>
+    <input type="range" id="lengthRange" name="lengthRange" min="1" max="24" value="1">
+    <span id="lengthDisplay">1 Hour</span>
+  </div>
+
+  <div>
+    <label for="fromRange">From (Hour of Day):</label>
+    <input type="range" id="fromRange" name="fromToRange" min="0" max="23" value="0">
+    <span id="fromDisplay">00:00</span>
+  </div>
+
+  <div>
+    <label for="toRange">To (Hour of Day):</label>
+    <input type="range" id="toRange" name="fromToRange" min="0" max="23" value="24">
+    <span id="toDisplay">24:00</span>
+  </div>
+
+  <div>
+    <label for="roomTypeSelect">Room Type:</label>
+    <select id="roomTypeSelect" name="roomTypeSelect">
+      <option value="any">Any</option>
+      <option value="study room">Study Room</option>
+      <option value="lecture room">Lecture Room</option>
+      <option value="computing room">Computing Room</option>
+      <option value="lab">Lab</option>
+    </select>
+  </div>
+
+  <div>
+    <label for="facilities">Facilities:</label>
+    <select id="facilities" name="facilities">
+      <option value="any">Any</option>
+    </select>
+  </div>
+
+  <div>
+    <label for="capacityRange">Capacity:</label>
+    <input type="range" id="capacityRange" name="capacityRange" min="1" max="1000" value="1">
+    <span id="capacityDisplay">1</span>
+  </div>
+</section>
+
+<!-- Booking Table -->
 <table id="bookings-table"></table>
 
+<!-- Scripts -->
 <script src="book.js" type="module"></script>
 <script src="filter.js" type="module"></script>
-<script type="text/javascript" src="darkmode.js" defer></script>
+<script src="darkmode.js" defer></script>
