@@ -62,8 +62,13 @@ book.addEventListener("click", () => {
   let selectedDate = parseInt(Math.floor(useableDate.getTime() / 1000));
   const offsetMinutes = new Date().getTimezoneOffset();
   console.log("Offset minutes", offsetMinutes);
-  let slotTime =
-    selectedDate + Number(firstBooking.time) * 60 * 60 + offsetMinutes * 60;
+  function getBookingTimestamp(dateStr, hourOfDay) {
+    const selectedDate = new Date(dateStr);
+    selectedDate.setHours(hourOfDay, 0, 0, 0);
+    return Math.floor(selectedDate.getTime() / 1000);
+  }
+  
+  let slotTime = getBookingTimestamp(selectedDateStr, Number(firstBooking.time));
   console.log("Slot time", slotTime);
 
   fetch("/booking/book", {
@@ -81,7 +86,7 @@ book.addEventListener("click", () => {
     .then((response) => {
       if (!response.ok) {
         return response.text().then((err) => {
-          throw new Error(err);
+          throw new Error(err.detail || "Failed to book room");
         });
       }
       return response.json();
@@ -97,7 +102,10 @@ book.addEventListener("click", () => {
         },
       ]);
     })
-    .catch(console.error);
+    .catch((error) => {
+      console.error("Error booking room:", error);
+      alert("Failed to book room: " + error.message);
+    });
 });
 function formatTime(startTimestamp, durationHours) {
   const startDate = new Date(startTimestamp * 1000);

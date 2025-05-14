@@ -209,7 +209,8 @@ async function cancelBtnClick(bookingId) {
     });
 
     if (!response.ok) {
-      throw new Error("Failed to cancel booking");
+      const errorData = await response.json();
+      throw new Error(errorData.detail || "Failed to cancel booking");
     }
 
     const data = await response.json();
@@ -217,7 +218,7 @@ async function cancelBtnClick(bookingId) {
     fetchBookings(token); 
   } catch (error) {
     console.error("Error cancelling booking:", error);
-    
+    alert("Failed to cancel booking: " + error.message);
   }
 }
 function formatTime(startTimestamp, durationHours) {
