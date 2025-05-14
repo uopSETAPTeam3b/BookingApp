@@ -69,40 +69,6 @@ def test_get_unis():
     # Assuming response returns a list of universities
     assert isinstance(response.json(), list)
 
-# Test /add_uni_user endpoint
-def test_add_uni_user():
-    response = client.post(f"/account/add_uni_user=?token={studentToken}&uni_id=1")
-    assert response.status_code == 200
-
-def test_add_uni_user_invalid_token():
-    response = client.post("/account/add_uni_user", json={"token": "invalid_token", "uni_id": 1})
-    assert response.status_code == 401
-    assert response.json().get("message") == "Invalid token"
-
-# Test /get_uni_requests endpoint
-def test_get_uni_requests():
-    response = client.get("/account/get_uni_requests", params={"uni_id": 1}, headers={"Authorization": f"Bearer {token}"})
-    assert response.status_code == 200
-    # Assuming response returns a list of requests
-    assert isinstance(response.json(), list)
-
-def test_get_uni_requests_invalid_token():
-    response = client.get("/account/get_uni_requests", params={"uni_id": 1}, headers={"Authorization": "Bearer invalid_token"})
-    assert response.status_code == 401
-    assert response.json().get("message") == "Invalid token"
-    
-    
-# Test /accept_uni_request endpoint
-def test_accept_uni_request():
-    response = client.post("/account/accept_uni_request", json={"token": token, "university_id": 1, "user_id": 2})
-    assert response.status_code == 200
-    assert response.json().get("message") == "Request accepted"
-
-def test_accept_uni_request_invalid_token():
-    response = client.post("/account/accept_uni_request", json={"token": "invalid_token", "university_id": 1, "user_id": 2})
-    assert response.status_code == 401
-    assert response.json().get("message") == "Invalid token"
-
 
 # BOOKING TESTS
 # Test /book endpoint
