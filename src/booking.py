@@ -24,7 +24,8 @@ class BookingManager(API):
         self.router.add_api_route("/get_rooms", self.get_rooms, methods=["POST"], response_model=list[Room])
         self.router.add_api_route("/get_room", self.get_room, methods=["POST"], response_model=Room)
         self.router.add_api_route("/get_day_bookings", self.get_day_bookings, methods=["GET"], response_model=list[Booking])
-        self.router.add_api_route("/get_booking_by_share_code", self.get_booking_by_share_code, methods=["GET"], response_model=Booking)
+        self.router.add_api_route("/share_booking_via_code", self.share_booking_via_code, methods=["GET"], response_model=Booking)
+        self.router.add_api_route("/enter_room", self.enter_room, methods=["GET"])
     @dataclass
     class BookRoom:
         token: str
@@ -38,6 +39,16 @@ class BookingManager(API):
         room_id: int
         duration: int
         old_booking_id: int
+
+    async def enter_room(self,room_id:int, room_code:str, datetime:int) -> JSONResponse: 
+       
+        try:
+            async with DB() as db:
+                
+                result = await db.enterRoom(room_id, room_code, datetime)
+                return JSONResponse(status_code=200, content={"result": result})
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=str(e))
         
     async def get_room_facilities(self, token: str, room_id: int) -> JSONResponse:
         """ Returns a list of facilities for a room """
@@ -49,20 +60,21 @@ class BookingManager(API):
                 raise HTTPException(status_code=404, detail="Room not found")
             facilities = await db.get_room_facilities(room_id)
             return JSONResponse(content={"facilities": facilities}, status_code=200)
-    async def get_booking_by_share_code(self,token:str, share_code: str) -> JSONResponse:
+    async def share_booking_via_code(self,token:str, share_code: str) -> JSONResponse:
         """ Returns a booking from a share code """
+        print("share_code ", share_code)
         async with DB() as db:
             if not await db.verify_token(token):
                 raise HTTPException(status_code=404, detail="User not found")
             booking = await db.get_booking_by_share_code(share_code)
             if not booking:
-                raise HTTPException(status_code=404, detail="Booking not found")
+                raise HTTPException(status_code=404, detail="Shared Booking not found")
             user = await db.get_user(token)
             if not user:
                 raise HTTPException(status_code=404, detail="User not found")
             if await db.add_shared_booking(booking.id, user.id):
                 return JSONResponse(status_code=200, content={"message": "Booking shared successfully"})
-            raise HTTPException(status_code=404, detail="Booking not found")
+            raise HTTPException(status_code=404, detail="Booking Could Not Be added")
                                 
     def set_hour_on_same_day(self, unix_timestamp: int, target_hour: int) -> int:
         
@@ -100,7 +112,11 @@ class BookingManager(API):
         async with DB() as db:
             if not await db.verify_token(booking.token):
                 raise HTTPException(status_code=404, detail="User not found")
-
+            user = await db.get_user(booking.token)
+            if not user:
+                raise HTTPException(status_code=404, detail="User not found")
+            if user.strikes >= 5:
+                raise HTTPException(status_code=403, detail="User has too many strikes")
             existing_booking = await db.find_booking(booking.room_id, booking.datetime)
             if existing_booking != "Booking doesn't exist.":
                 raise HTTPException(status_code=409, detail="Room already booked")
@@ -280,18 +296,18 @@ class BookingManager(API):
             all_rooms = await db.get_rooms()
             if not all_rooms:
                 raise HTTPException(status_code=404, detail="No rooms found")
-            
+
             all_buildings = await db.get_buildings()
             if not all_buildings:
                 raise HTTPException(status_code=404, detail="No buildings found")
-            
+
             # Use the to_dict method to serialize the rooms and buildings
             rooms_data = [room.to_dict() for room in all_rooms]
             buildings_data = [b.to_dict() for b in all_buildings]
-            
+
             # Ensure unique buildings by name
             unique_buildings = {b['name']: b for b in buildings_data}.values()
-            
+
             return JSONResponse(content={"rooms": rooms_data, "buildings": list(unique_buildings)}, status_code=200)
     @dataclass
     class GetRoom:

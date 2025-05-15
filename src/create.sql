@@ -65,7 +65,8 @@ CREATE TABLE Booking (
     start_time TEXT NOT NULL,
     duration TEXT NOT NULL, 
     access_code TEXT NOT NULL,
-    share_code TEXT
+    share_code TEXT,
+    completed INTEGER DEFAULT 0 CHECK (completed IN (0, 1))
 );
 
 CREATE TABLE Notification (

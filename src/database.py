@@ -44,6 +44,7 @@ class User:
     email: str
     id: Optional[int] = None
     role: Optional[str] = None
+    strikes: Optional[int] = None
 
 
 @dataclass
@@ -269,7 +270,7 @@ class DatabaseManager:
         """Get user from authentication token"""
         async with self.conn.execute(
             """
-            SELECT  u.username, u.email, u.role, u.user_id
+            SELECT  u.username, u.email, u.role, u.user_id, u.offence_count
             FROM User u 
             JOIN Authentication a ON u.user_id = a.user_id 
             WHERE a.token = ?
@@ -281,10 +282,31 @@ class DatabaseManager:
                     username=result[0],
                     email=result[1],
                     id=result[3],
-                    role=result[2]
+                    role=result[2],
+                    strikes=result[4]
                 )
         return None
-
+    async def enterRoom(self, room_id, room_code, datetime):
+       
+        bookings = await self.get_all_bookings()
+        for booking in bookings:
+            if booking.room.id == room_id and booking.access_code == room_code:
+                if booking.time <= datetime <= booking.time + booking.duration * 3600:
+                    print("Booking found")
+                    async with DB() as db:
+                        await db.execute(
+                            """
+                            UPDATE Booking
+                            SET completed = ?
+                            WHERE room_id = ? AND start_time = ?
+                            """,
+                            (1, room_id, datetime)
+                        )
+                    return True
+        return False
+        
+        
+        
     async def get_user_from_booking(self, booking_id: int) -> Optional[User]:
         """Get user associated with a booking"""
         async with self.conn.execute(
@@ -613,7 +635,7 @@ class DatabaseManager:
     async def get_all_bookings(self) -> list[Booking]:
         """ Returns a list of all future/current bookings """
         
-        async with self.conn.execute(
+        async with await self.conn.execute(
             '''
             SELECT 
                 b.booking_id, 
@@ -637,7 +659,7 @@ class DatabaseManager:
             '''
         ) as cur:
 
-            results = cur.fetchall()  
+            results = await cur.fetchall()  
             bookings = []  
 
             for result in results:
