@@ -1,62 +1,186 @@
+/* Filter Section */
+#filter {
+    background-color: var(--background-color);
+    color: var(--text-color);
+    padding: 24px;
+    margin-top: 0px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 24px;
+    max-height: 1000px;
+    opacity: 1;
+    transform: scaleY(1);
+    transform-origin: top;
+    transition: max-height 0.4s ease, opacity 0.4s ease, transform 0.4s ease;
+    overflow: hidden;
+}
+
+#filter.hidden {
+    max-height: 0;
+    opacity: 0;
+    transform: scaleY(0.95);
+    pointer-events: none;
+}
+
+#filter label {
+    font-weight: 600;
+    margin-bottom: 8px;
+    font-size: 1rem;
+    display: block;
+}
+
+#filter select,
+#filter input[type="range"] {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1px solid var(--color-1);
+    background-color: var(--input-color);
+    color: var(--text-color);
+    font-size: 1rem;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+#filter select:focus,
+#filter input[type="range"]:focus {
+    outline: none;
+    border-color: var(--accent-color);
+}
+
+#filter span {
+    margin-top: 6px;
+    display: block;
+    font-size: 0.85rem;
+    color: var(--text-color);
+}
+
+/* Booking Table */
 #bookings-table {
     width: 100%;
     border-collapse: collapse;
-    font-family: Arial, sans-serif;
-    margin-top: 20px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin-top: 24px;
     table-layout: fixed;
+    border-radius: 12px;
+    overflow: hidden;
 }
 
 #bookings-table th,
 #bookings-table td {
-    border: 1px solid #ccc;
-    padding: 10px;
+    border: 1px solid #ddd;
+    padding: 12px;
     text-align: center;
     word-wrap: break-word;
+    transition: background-color 0.2s ease;
 }
 
 #bookings-table th {
-    background-color: #f4f4f4;
-    font-weight: bold;
+    background-color: var(--input-color);
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--text-color);
 }
 
 #bookings-table td {
+    font-size: 0.95rem;
     cursor: pointer;
-    transition: background-color 0.2s;
 }
 
 #bookings-table td:hover {
-    filter: brightness(0.95);
+    background-color: rgba(0, 0, 0, 0.05);
 }
+
 #bookings-table td.unusable {
-    color: #888;
+    color: #aaa;
     font-style: italic;
+    cursor: not-allowed;
 }
 
 #bookings-table td.booked {
-    background-color: #d3d3d3 !important;
+    background-color: #e0e0e0 !important;
     cursor: not-allowed;
 }
 
 #bookings-table td.available {
-    background-color: #90ee90;
+    background-color: #b3f7b3;
 }
 
 #bookings-table td.selected {
-    background-color: rgb(231, 101, 101) !important;
+    background-color: #e76161 !important;
+    color: white;
 }
+
+/* Common Input Styles */
+#buildingSelect,
+#date {
+    padding: 5px 5px;
+    border-radius: 5px;
+    border: 1px solid var(--color-1);
+    background-color: var(--input-color);
+    color: var(--text-color);
+    font-size: 1rem;
+    font-family: inherit;
+    margin: 8px 0px 10px 0;
+    transition: border-color 0.3s ease, background-color 0.3s ease;
+}
+
+#buildingSelect:focus,
+#date:focus {
+    outline: none;
+    border-color: var(--accent-color);
+}
+
+#date {
+    text-align: center;
+    min-width: 130px;
+    border-right: 1px solid var(--background-color);
+}
+
+#date::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    cursor: pointer;
+}
+
+/* Shared Button Styles */
+#expand-filter,
+#pre,
+#next,
+#book {
+    display: inline-block;
+    padding: 6px 20px;
+    font-size: 1rem;
+    font-family: inherit;
+    background-color: var(--accent-color);
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    border-radius: 5px;
+    margin: 0px 0 10px 0;
+}
+
+#expand-filter{
+    padding: 3px 10px;
+}
+
+#expand-filter:hover,
+#pre:hover,
+#next:hover,
+#book:hover {
+    background-color: var(--accent-color-hover);
+    transform: translateY(-1px);
+}
+
 .hidden {
     display: none !important;
-  }
+}
 
-.room-modal{
-  display: none;
-  position: fixed;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-  z-index: 1000;
-  width: 300px;
+#date::-webkit-calendar-picker-indicator {
+    filter: brightness(0); 
+}
+  
+
+.dark-mode #date::-webkit-calendar-picker-indicator {
+    filter: brightness(100); 
 }
