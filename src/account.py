@@ -21,9 +21,6 @@ class AccountManager(API):
         self.router.add_api_route("/me", self.me, methods=["GET"])
         self.router.add_api_route("/get_unis", self.get_unis, methods=["GET"])
         self.router.add_api_route("/accountDetails", self.accountDetails, methods=["GET"])
-        self.router.add_api_route("/add_uni_user", self.add_uni_user, methods=["POST"])
-        self.router.add_api_route("/get_uni_requests", self.get_uni_requests, methods=["GET"])
-        self.router.add_api_route("/accept_uni_request", self.accept_uni_request, methods=["POST"])
         self.login_attempts = defaultdict(lambda: {"count": 0, "last_attempt": None})
 
     @dataclass
@@ -39,27 +36,6 @@ class AccountManager(API):
 
             await db.accept_request(user_id, university_id)
             return JSONResponse(content={"message": "Request accepted"}, status_code=200)
-            
-    async def get_uni_requests(self, token:str, uni_id:int) -> JSONResponse:
-        """Returns a list of users who have requested to join a university"""
-        async with DB() as db:
-            user: User = await db.get_user(token)
-            if user is None or not user.role == "admin":
-                return JSONResponse(content={"message": "Invalid token"}, status_code=401)
-
-            uni_requests = await db.get_uni_requests(uni_id)
-            if uni_requests is None:
-                return JSONResponse(content={"message": "No requests found"}, status_code=404)
-            return JSONResponse(content=uni_requests, status_code=200)
-        
-    async def add_uni_user(self, token:str, uni_id:int) -> JSONResponse:
-        """Adds a user to a university"""
-        async with DB() as db:
-            user: User = await db.get_user(token)
-            if user is None:
-                return JSONResponse(content={"message": "Invalid token"}, status_code=401)
-
-            await db.add_user_to_university(user.id, uni_id)
             
     async def get_unis(self) -> JSONResponse:
         """Returns a list of universities"""

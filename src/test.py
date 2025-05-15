@@ -12,6 +12,7 @@ if os.path.exists("database_test.db"):
 
 token = None
 studentToken = None
+share_code = None
 
 def test_read_main():
     response = client.get("/")
@@ -102,14 +103,17 @@ def test_book_room_already_booked():
     })
     assert response.status_code == 409
     assert response.json().get("detail") == "Room already booked"
-    
+
+
 # Test /get_bookings endpoint
 def test_get_bookings():
+    global share_code
     response = client.post("/booking/get_bookings", json={
         "token": f"{token}"
     })
     assert response.status_code == 200
     assert "bookings" in response.json()
+    share_code = response.json().get("bookings")[0].get("share_code")
 
 def test_get_bookings_invalid_token():
     response = client.post("/booking/get_bookings", json={
@@ -117,8 +121,20 @@ def test_get_bookings_invalid_token():
     })
     assert response.status_code == 404
     assert response.json().get("detail") == "User not found"
-"valid_token"
 
+# Test /share_booking_via_code endpoint
+# as the booking is made by the same user it cannot be added as you cant share a booking with yourself
+def test_share_via_sharecode():
+    response = client.get(f"/booking/share_booking_via_code?token={token}&share_code={share_code}")
+    assert response.status_code == 404
+    assert "Booking Could Not Be added" in response.json().get("detail")
+    
+def test_share_via_invalid_sharecode():
+    share_code = "invalid_share_code"
+    response = client.get(f"/booking/share_booking_via_code?token={token}&share_code={share_code}")
+    assert response.status_code == 404
+    assert "Shared Booking not found" in response.json().get("detail")
+    
 # Test /get_bookings_for_date endpoint
 def test_get_bookings_for_date():
     response = client.get("/booking/get_bookings_for_date", params={
