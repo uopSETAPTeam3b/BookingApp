@@ -12,6 +12,8 @@
 
  - up2233199 -johanja04
 
+ - up2208881 -T33JAY15
+
 ## How to commit from CLI
 - Switch to feature branch
   - if branch exists `git checkout <BRANCH_NAME>`
@@ -26,7 +28,6 @@
   - go to https://github.com/uopSETAPTeam3b
   - find branch
   - create pull request 
-
 
 ## How To Setup Notifications
 - Create a .env file in your main directory
@@ -43,5 +44,3 @@ smtp_password = ""
 - We all have an account and 3 bookings made for testing
   - Log in using your uni email
   - Passwords = welcome1234
-
-

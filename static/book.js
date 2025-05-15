@@ -60,6 +60,73 @@ book.addEventListener("click", () => {
     console.log(sel);
 })
 
+  const firstBooking = sel[0];
+  let dateSelector = document.getElementById("date");
+  let selectedDateStr = dateSelector.value;
+  let useableDate = new Date(selectedDateStr);
+
+  let selectedDate = parseInt(Math.floor(useableDate.getTime() / 1000));
+  const offsetMinutes = new Date().getTimezoneOffset();
+  console.log("Offset minutes", offsetMinutes);
+  function getBookingTimestamp(dateStr, hourOfDay) {
+    const selectedDate = new Date(dateStr);
+    selectedDate.setHours(hourOfDay, 0, 0, 0);
+    return Math.floor(selectedDate.getTime() / 1000);
+  }
+  
+  let slotTime = getBookingTimestamp(selectedDateStr, Number(firstBooking.time));
+  console.log("Slot time", slotTime);
+
+  fetch("/booking/book", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      token: localStorage.getItem("token"),
+      datetime: slotTime,
+      duration: sel.length,
+      room_id: firstBooking.room,
+    }),
+  })
+    .then((response) => {
+      if (!response.ok) {
+        return response.text().then((err) => {
+          throw new Error(err.detail || "Failed to book room");
+        });
+      }
+      return response.json();
+    })
+    .then((data) => {
+      console.log("Booking response:", data);
+
+      updateBookingTable();
+      showConfirmationOverlay(data.booking_id, [
+        {
+          room: `${data.building_name} - ${data.room_name}`,
+          time: formatTime(data.start_time, data.duration),
+        },
+      ]);
+    })
+    .catch((error) => {
+      console.error("Error booking room:", error);
+      alert("Failed to book room: " + error.message);
+    });
+});
+function formatTime(startTimestamp, durationHours) {
+  const startDate = new Date(startTimestamp * 1000);
+  const endDate = new Date(
+    startDate.getTime() + durationHours * 60 * 60 * 1000
+  );
+
+  const format = (date) =>
+    date.getHours().toString().padStart(2, "0") +
+    ":" +
+    date.getMinutes().toString().padStart(2, "0");
+
+  return `${format(startDate)} - ${format(endDate)}`;
+}
+
 function getIdForRoom(room) {
     return Object.keys(roomids).find(key => roomids[key] === room)
 }

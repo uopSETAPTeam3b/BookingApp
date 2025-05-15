@@ -116,27 +116,42 @@ async function alterBooking(bookingId, newTime,newDuration, newRoomId) {
 }
 
 async function cancelBtnClick(bookingId) {
-    console.log("Cancel button clicked for booking ID:", bookingId);
-    const token = localStorage.getItem("token");
-    try {
-        const response = await fetch('/booking/cancel', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ token: token, booking_id: bookingId })
-        });
+  console.log("Cancel button clicked for booking ID:", bookingId);
+  const token = localStorage.getItem("token");
+  try {
+    const response = await fetch("/booking/cancel", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ token: token, booking_id: bookingId }),
+    });
 
-        if (!response.ok) {
-            throw new Error('Failed to cancel booking');
-        }
-
-        const data = await response.json();
-        fetchBookings(token);  // Refresh bookings after cancellation
-    } catch (error) {
-        console.error('Error cancelling booking:', error);
-        // Optional: show an error message to user
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || "Failed to cancel booking");
     }
+
+    const data = await response.json();
+    showCancelledOverlay(bookingId);
+    fetchBookings(token); 
+  } catch (error) {
+    console.error("Error cancelling booking:", error);
+    alert("Failed to cancel booking: " + error.message);
+  }
+}
+function formatTime(startTimestamp, durationHours) {
+  const startDate = new Date(startTimestamp * 1000); 
+  const endDate = new Date(
+    startDate.getTime() + durationHours * 60 * 60 * 1000
+  );
+
+  const format = (date) =>
+    date.getHours().toString().padStart(2, "0") +
+    ":" +
+    date.getMinutes().toString().padStart(2, "0");
+
+  return `${format(startDate)} - ${format(endDate)}`;
 }
 window.cancelBtnClick = cancelBtnClick;
 window.editBtnClick = editBtnClick;
