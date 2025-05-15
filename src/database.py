@@ -112,6 +112,8 @@ class DatabaseManager:
         if not db_exists:
             with open(self.create_script, "r") as f:
                 await self.conn.executescript(f.read())
+            with open(self.insert_script, "r") as f:
+                await self.conn.executescript(f.read())
 
         await self.conn.commit()
         return self
