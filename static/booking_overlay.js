@@ -130,10 +130,16 @@ async function fetchRoomsAndBuildings() {
     console.error("Error fetching rooms/buildings:", error);
   }
 }
+function isUnixTimeToday(unixTime) {
+  const inputDate = new Date(unixTime * 1000);
+  const now = new Date();
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startOfTomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+  return inputDate >= startOfToday && inputDate < startOfTomorrow;
+}
 async function displayBookings(bookings, selectedBookingId) {
   const tbody = document.getElementById("booking-body");
   tbody.innerHTML = "";
-  console.log("Bookings HEREHEHHEHE:", bookings);
 
   const { rooms, buildings } = await fetchRoomsAndBuildings();
 
@@ -145,14 +151,18 @@ async function displayBookings(bookings, selectedBookingId) {
     return;
   }
 
-  const openTime = parseInt(currentBooking.opening_time.split(":")[0]);
+  let openTime = parseInt(currentBooking.opening_time.split(":")[0]);
   const closeTime = parseInt(currentBooking.closing_time.split(":")[0]);
 
   const bookingDate = new Date(currentBooking.start_time * 1000);
   const year = bookingDate.getUTCFullYear();
   const month = bookingDate.getUTCMonth();
   const day = bookingDate.getUTCDate();
-
+  const today = new Date();
+  if (isUnixTimeToday(currentBooking.start_time)) {
+    openTime = today.getHours();
+    console.log("Open time adjusted to current hour:", openTime);
+  }
   const headerRow = document.createElement("tr");
   const emptyCell = document.createElement("th");
   headerRow.appendChild(emptyCell);
