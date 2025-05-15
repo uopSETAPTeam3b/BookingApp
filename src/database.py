@@ -94,7 +94,6 @@ class DatabaseManager:
     file: str = "database.db"
     create_script: str = "src/create.sql"
     insert_script: str = "src/insert.sql"
-
     
     def __init__(self, file: str | None = None, create: str | None = None, insert: str | None = None):
         DatabaseManager.file = file or DatabaseManager.file
@@ -112,8 +111,6 @@ class DatabaseManager:
 
         if not db_exists:
             with open(self.create_script, "r") as f:
-                await self.conn.executescript(f.read())
-            with open(self.insert_script, "r") as f:
                 await self.conn.executescript(f.read())
 
         await self.conn.commit()
@@ -523,62 +520,41 @@ class DatabaseManager:
                 ))
             return buildings  
     async def add_booking(self, room_id: int, time: int, token: str, duration: int) -> Booking:
-        try:
-            await self.conn.execute("BEGIN TRANSACTION")
-            
-            async with await self.conn.execute(
-                '''
-                SELECT b.booking_id FROM Booking b
-                WHERE b.room_id = ? AND b.start_time <= ? 
-                AND (b.start_time + b.duration * 3600) > ?
-                ''',
-                (room_id, time, time)
-            ) as cur:
-                existing = await cur.fetchone()
-                if existing:
-                    await self.conn.execute("ROLLBACK")
-                    return None 
-                    
-            user = await self.get_user(token)
+        """ Adds a booking to the database """
+        async with DB() as db:
+            user = await db.get_user(token)  
             if not user:
-                await self.conn.execute("ROLLBACK")
-                return None
-                
-            room = await self.get_room(room_id)
+                return Booking(0, User("", ""), Room(0), 0)
+
+            room = await db.get_room(room_id)  
             if not room:
-                await self.conn.execute("ROLLBACK")
-                return None
+                return Booking(0, User("", ""), Room(0), 0)
 
             building_id = room.building_id
-            building = await self.get_building(building_id)
-            
+            building = await db.get_building(building_id) 
             access_code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
             share_code = str(''.join(random.choices(string.ascii_uppercase + string.digits, k=10)))
-            
-            async with await self.conn.execute(
+            async with await db.conn.execute(
                 '''
                 INSERT INTO Booking (building_id, room_id, start_time, duration, access_code, share_code)
                 VALUES (?, ?, ?, ?, ?, ?)
                 ''',
                 (building_id, room_id, time, duration, access_code, share_code)
             ) as cursor:
-                booking_id = cursor.lastrowid
+                await db.conn.commit()
 
-            await self.conn.execute(
+            booking_id = cursor.lastrowid
+
+            await db.conn.execute(
                 '''
                 INSERT INTO User_Booking (user_id, booking_id)
                 VALUES (?, ?)
                 ''',
                 (user.id, booking_id)
             )
-            
-            await self.conn.execute("COMMIT")
-            return Booking(booking_id, room, time, user, access_code, share_code, 0, duration, building)
-        
-        except Exception as e:
-            await self.conn.execute("ROLLBACK")
-            print(f"Error in add_booking: {e}")
-            return None
+            await db.conn.commit()
+
+            return Booking(booking_id, room, time, user, access_code, share_code, 0, duration, building) 
     async def add_shared_booking(self, booking_id:int, user_id:int):
         """ Adds a shared booking to the database """
         try:

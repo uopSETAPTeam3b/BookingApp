@@ -86,7 +86,10 @@ book.addEventListener("click", () => {
     .then((response) => {
       if (!response.ok) {
         return response.text().then((err) => {
-          throw new Error(err.detail || "Failed to book room");
+          if (response.status === 403) { 
+            alert("User has to many strikes, please contact admin");
+            return;
+          }
         });
       }
       return response.json();
@@ -103,8 +106,8 @@ book.addEventListener("click", () => {
       ]);
     })
     .catch((error) => {
-      console.error("Error booking room:", error);
-      alert("Failed to book room: " + error.message);
+      console.error("Error booking room:", error.detail);
+      
     });
 });
 function formatTime(startTimestamp, durationHours) {
