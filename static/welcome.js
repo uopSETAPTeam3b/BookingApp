@@ -50,9 +50,11 @@ window.addEventListener("DOMContentLoaded", async () => {
   console.log("Logged in status:", loggedIn);
   if (loggedIn) {
     document.getElementById("logged-out").style.display = "none";
+    document.getElementById("logged-in").style.display = "block";
     return;
   }
   document.getElementById("logged-out").style.display = "block";
+  document.getElementById("logged-in").style.display = "none";
   addBookVectors();
   window.addEventListener("resize", addBookVectors);
   document.querySelectorAll(".button").forEach((button) => {

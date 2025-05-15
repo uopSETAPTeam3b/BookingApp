@@ -152,9 +152,10 @@ class BookingManager(API):
             booking = await db.get_booking(cancel.booking_id)
             if not booking:
                 raise HTTPException(status_code=404, detail="Booking not found")
-            booking_time = datetime.fromtimestamp(booking.time, tz=timezone.utc)
-            now = datetime.now(timezone.utc)
+            booking_time = datetime.fromtimestamp(booking.time)
+            now = datetime.now()
             newStrike = False
+            print("Booking time: ", booking_time)
             if 0 <= (booking_time - now).total_seconds() <= 1800: 
                 
                 strikes = await db.issue_strike_to_user(booking.user.id)
